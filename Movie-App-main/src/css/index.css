@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✅ Smooth UI */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ✅ Global Body */
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: radial-gradient(circle at top, #111827 0%, #0b0b0f 45%, #000 100%);
+  color: white;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ✅ Fix images overflow */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ✅ Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0b0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b2b36;
+  border-radius: 10px;
+  border: 2px solid #0b0b0f;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a4a;
+}
+
+/* ✅ Selection */
+::selection {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+/* ✅ Glass Effect */
+.glass {
+  background: rgba(15, 15, 18, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ✅ Smooth transitions for buttons and links */
+button,
+a {
+  transition: 0.2s ease;
+}
+
+/* ✅ Optional: better focus for accessibility */
+:focus-visible {
+  outline: 2px solid rgba(239, 68, 68, 0.7);
+  outline-offset: 2px;
+}
+
+/* ✅ Better card hover utility */
+.card-hover {
+  transition: all 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ✅ RTL Fix */
+html[dir="rtl"] body {
+  direction: rtl;
+}
+html[dir="ltr"] body {
+  direction: ltr;
+}
+
+/* ✅ Prevent accidental overflow */
+* {
+  box-sizing: border-box;
+}
