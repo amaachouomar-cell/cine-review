@@ -29,6 +29,27 @@ noBackdrop: "لا توجد صورة خلفية",
     popularMovies: "الأفلام الشائعة",
     trendingMovies: "الأفلام الرائجة هذا الأسبوع",
     topRatedMovies: "أفضل الأفلام تقييماً",
+    about: "من نحن",
+contact: "تواصل معنا",
+privacy: "سياسة الخصوصية",
+terms: "الشروط والأحكام",
+
+footerLinks: "روابط",
+footerDesc:
+  "منصة حديثة لاكتشاف الأفلام وتقييمها وكتابة مراجعاتك بتجربة سلسة واحترافية.",
+tmdbNote:
+  "هذا الموقع يستخدم TMDB API لكنه غير معتمد أو مدعوم رسميًا من TMDB.",
+
+footerSupport: "الدعم",
+footerSupportDesc:
+  "إذا أعجبك الموقع شاركه مع أصدقائك أو أرسل لنا اقتراحات لتطويره.",
+contactBtn: "راسلنا",
+rights: "جميع الحقوق محفوظة.",
+fast: "سريع ومتجاوب",
+more: "المزيد",
+legal: "قانوني",
+
+
   },
 
   en: {
@@ -61,6 +82,26 @@ noBackdrop: "No Backdrop",
     popularMovies: "Popular Movies",
     trendingMovies: "Trending Movies This Week",
     topRatedMovies: "Top Rated Movies",
+    about: "About",
+contact: "Contact",
+privacy: "Privacy Policy",
+terms: "Terms",
+
+footerLinks: "Links",
+footerDesc:
+  "A modern platform to discover movies, rate them, and share your opinion with a smooth premium experience.",
+tmdbNote:
+  "This website uses the TMDB API but is not endorsed or certified by TMDB.",
+
+footerSupport: "Support",
+footerSupportDesc:
+  "If you like this project, share it with your friends or send us feedback!",
+contactBtn: "Contact Us",
+rights: "All rights reserved.",
+fast: "Fast & Responsive",
+more: "More",
+legal: "Legal",
+
   },
 };
 
