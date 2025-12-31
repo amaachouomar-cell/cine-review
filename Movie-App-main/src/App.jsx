@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import Navbar from "./components/NavBar";
@@ -10,6 +15,12 @@ import Favorites from "./pages/Favorites";
 import Trending from "./pages/Trending";
 import TopRated from "./pages/TopRated";
 import Reviews from "./pages/Reviews";
+
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+
 import NotFound from "./pages/NotFound";
 
 function AnimatedRoutes() {
@@ -18,7 +29,7 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {/* ✅ Spacer بسلاسة */}
+      {/* ✅ Spacer */}
       <motion.div
         initial={false}
         animate={{ height: isDetailsPage ? 0 : 86 }}
@@ -33,6 +44,12 @@ function AnimatedRoutes() {
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
+
+          {/* ✅ Legal Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
 
           {/* ✅ Details */}
           <Route path="/movie/:id" element={<MovieDetails />} />

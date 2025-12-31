@@ -1,25 +1,69 @@
-import { motion } from "framer-motion";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
-export default function About() {
+import Navbar from "./components/NavBar";
+import Footer from "./components/Footer";
+
+import Home from "./pages/Home";
+import MovieDetails from "./pages/MovieDetails";
+import Favorites from "./pages/Favorites";
+import Trending from "./pages/Trending";
+import TopRated from "./pages/TopRated";
+import Reviews from "./pages/Reviews";
+
+// ✅ Pages for AdSense / SEO
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+
+import NotFound from "./pages/NotFound";
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const isDetailsPage = location.pathname.startsWith("/movie/");
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="min-h-screen px-4 py-14 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white"
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-4xl font-extrabold">About CineReview</h1>
-        <p className="text-gray-300 leading-relaxed">
-          CineReview is a movie & TV review platform built to help you discover the best films
-          through ratings, reviews and recommendations. Our goal is to provide a clean and fast
-          experience for cinema lovers.
-        </p>
+    <>
+      {/* ✅ Spacer بسلاسة */}
+      <motion.div
+        initial={false}
+        animate={{ height: isDetailsPage ? 0 : 86 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
+      />
 
-        <p className="text-gray-400 text-sm">
-          This website uses the TMDB API but is not endorsed or certified by TMDB.
-        </p>
-      </div>
-    </motion.div>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* ✅ Main Pages */}
+          <Route path="/" element={<Home />} />
+          <Route path="/trending" element={<Trending />} />
+          <Route path="/top-rated" element={<TopRated />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/reviews" element={<Reviews />} />
+
+          {/* ✅ Static SEO Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+
+          {/* ✅ Details */}
+          <Route path="/movie/:id" element={<MovieDetails />} />
+
+          {/* ✅ NotFound */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <Navbar />
+      <AnimatedRoutes />
+      <Footer />
+    </Router>
   );
 }
