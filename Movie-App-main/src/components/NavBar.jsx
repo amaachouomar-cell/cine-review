@@ -19,11 +19,13 @@ export default function Navbar() {
 
   // ✅ Main links
   const links = [
-    { to: "/", label: t.home },
-    { to: "/trending", label: t.trending },
-    { to: "/top-rated", label: t.topRated },
-    { to: "/favorites", label: t.favorites },
-  ];
+  { to: "/", label: t.home },
+  { to: "/trending", label: t.trending },
+  { to: "/top-rated", label: t.topRated },
+  { to: "/favorites", label: t.favorites },
+  { to: "/reviews", label: t.reviews },
+];
+
 
   // ✅ Legal links (Important for Adsense)
   const legalLinks = [

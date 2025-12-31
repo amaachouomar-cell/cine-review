@@ -11,8 +11,9 @@ function StarRating({ value, onChange }) {
           type="button"
           onClick={() => onChange(star)}
           className={`text-2xl transition ${
-            star <= value ? "text-yellow-400" : "text-white/15"
+            star <= value ? "text-yellow-400" : "text-white/20"
           } hover:scale-110`}
+          aria-label={`rate ${star}`}
         >
           ★
         </button>
@@ -21,44 +22,81 @@ function StarRating({ value, onChange }) {
   );
 }
 
-export default function Reviews() {
-  const { t, lang } = useLang();
+function ReviewCard({ review, onDelete, t }) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="bg-zinc-900/60 border border-white/10 rounded-3xl p-5 space-y-3"
+    >
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="text-white font-bold text-lg">{review.title}</h3>
+          <p className="text-gray-400 text-xs mt-1">{review.date}</p>
+        </div>
 
-  const storageKey = useMemo(() => "cine_reviews_blog", []);
-  const [items, setItems] = useState([]);
+        <div className="flex items-center gap-2">
+          <span className="text-yellow-400 text-sm font-semibold">
+            {"★".repeat(review.rating)}
+            <span className="text-white/20">
+              {"★".repeat(5 - review.rating)}
+            </span>
+          </span>
+
+          <button
+            onClick={() => onDelete(review.id)}
+            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 transition text-white text-sm font-semibold"
+          >
+            {t?.delete || "Delete"}
+          </button>
+        </div>
+      </div>
+
+      <p className="text-gray-200 text-sm leading-relaxed">{review.content}</p>
+    </motion.div>
+  );
+}
+
+export default function Reviews() {
+  const { t } = useLang();
+
+  const storageKey = useMemo(() => `site_reviews`, []);
+  const [reviews, setReviews] = useState([]);
   const [title, setTitle] = useState("");
-  const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
+  const [rating, setRating] = useState(5);
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
-    setItems(saved ? JSON.parse(saved) : []);
+    setReviews(saved ? JSON.parse(saved) : []);
   }, [storageKey]);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, storageKey]);
+    localStorage.setItem(storageKey, JSON.stringify(reviews));
+  }, [reviews, storageKey]);
 
-  const addPost = (e) => {
+  const addReview = (e) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
-    const newPost = {
+    const newReview = {
       id: crypto.randomUUID(),
       title: title.trim(),
-      rating,
       content: content.trim(),
-      date: new Date().toLocaleDateString(lang === "ar" ? "ar-MA" : "en-GB"),
+      rating,
+      date: new Date().toLocaleDateString("en-GB"),
     };
 
-    setItems([newPost, ...items]);
+    setReviews([newReview, ...reviews]);
     setTitle("");
-    setRating(5);
     setContent("");
+    setRating(5);
   };
 
-  const deletePost = (id) => {
-    setItems(items.filter((p) => p.id !== id));
+  const deleteReview = (id) => {
+    setReviews(reviews.filter((r) => r.id !== id));
   };
 
   return (
@@ -69,93 +107,66 @@ export default function Reviews() {
       transition={{ duration: 0.3 }}
       className="min-h-screen px-4 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white"
     >
-      <div className="max-w-5xl mx-auto pt-10 space-y-10">
-        {/* ✅ Header */}
-        <div className="space-y-2">
+      <div className="max-w-4xl mx-auto pt-12 space-y-8">
+        {/* ✅ Title */}
+        <div className="text-center space-y-2">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-            📝 {t?.reviews || "Reviews"}
+            ⭐ {t?.reviews || "Reviews"}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-400 text-sm md:text-base leading-relaxed">
             {t?.reviewsDesc ||
-              "Write your own reviews and share your opinion — this content helps your site get approved by AdSense."}
+              "Write your own reviews — this helps your site get approved by AdSense."}
           </p>
         </div>
 
-        {/* ✅ Add Review */}
+        {/* ✅ Form */}
         <form
-          onSubmit={addPost}
+          onSubmit={addReview}
           className="bg-zinc-900/50 border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-4"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t?.reviewTitle || "Review title..."}
-              className="px-4 py-3 rounded-2xl bg-black/40 border border-white/10 outline-none focus:border-red-500 transition"
-            />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t?.reviewTitle || "Review title..."}
+            className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/10 outline-none focus:border-red-500 transition"
+          />
 
-            <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-black/40 border border-white/10">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={t?.reviewContent || "Write your review here..."}
+            rows={5}
+            className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/10 outline-none focus:border-red-500 transition"
+          />
+
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-gray-300">
                 {t?.yourRating || "Your rating:"}
               </span>
               <StarRating value={rating} onChange={setRating} />
             </div>
+
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-semibold shadow-lg"
+            >
+              {t?.publish || "Publish"}
+            </button>
           </div>
-
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={t?.reviewContent || "Write your review..."}
-            rows={5}
-            className="w-full px-4 py-3 rounded-2xl bg-black/40 border border-white/10 outline-none focus:border-red-500 transition"
-          />
-
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-semibold shadow-lg"
-          >
-            {t?.publish || "Publish"}
-          </button>
         </form>
 
-        {/* ✅ Posts */}
-        {items.length === 0 ? (
-          <p className="text-gray-400">
+        {/* ✅ Reviews List */}
+        {reviews.length === 0 ? (
+          <p className="text-gray-400 text-center">
             {t?.noReviews || "No reviews yet — start writing now ✨"}
           </p>
         ) : (
-          <div className="grid gap-4">
-            {items.map((p) => (
-              <div
-                key={p.id}
-                className="bg-zinc-900/60 border border-white/10 rounded-3xl p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold">{p.title}</h2>
-                    <p className="text-yellow-400 text-sm font-semibold mt-1">
-                      {"★".repeat(p.rating)}
-                      <span className="text-white/20">
-                        {"★".repeat(5 - p.rating)}
-                      </span>
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{p.date}</p>
-                  </div>
-
-                  <button
-                    onClick={() => deletePost(p.id)}
-                    className="text-xs px-3 py-2 rounded-xl bg-black/40 border border-white/10 hover:bg-black/70 transition"
-                  >
-                    {t?.delete || "Delete"}
-                  </button>
-                </div>
-
-                <p className="text-gray-200 mt-4 leading-relaxed text-sm whitespace-pre-line">
-                  {p.content}
-                </p>
-              </div>
+          <motion.div layout className="grid gap-4">
+            {reviews.map((r) => (
+              <ReviewCard key={r.id} review={r} onDelete={deleteReview} t={t} />
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </motion.div>
