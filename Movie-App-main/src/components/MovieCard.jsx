@@ -36,7 +36,7 @@ function MovieCard({ movie }) {
               className="w-full h-[320px] object-cover"
               loading="lazy"
               decoding="async"
-              fetchpriority="low"
+              fetchPriority="low"
             />
           ) : (
             <div className="w-full h-[320px] bg-zinc-900 flex items-center justify-center text-gray-400">

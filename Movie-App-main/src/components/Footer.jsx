@@ -8,7 +8,11 @@ export default function Footer() {
   return (
     <footer className="mt-16 border-t border-white/10 bg-zinc-950/60 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div
+          className={`grid grid-cols-1 md:grid-cols-3 gap-10 ${
+            lang === "ar" ? "text-right" : "text-left"
+          }`}
+        >
           {/* ✅ Brand */}
           <div className="space-y-3">
             <h2 className="text-xl font-extrabold tracking-wide">
@@ -20,7 +24,7 @@ export default function Footer() {
                 "A modern platform to discover movies, rate them, and share your opinion with a smooth premium experience."}
             </p>
 
-            <p className="text-gray-500 text-xs">
+            <p className="text-gray-500 text-xs leading-relaxed">
               {t?.tmdbNote ||
                 "This product uses the TMDB API but is not endorsed or certified by TMDB."}
             </p>
@@ -43,7 +47,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* ✅ Newsletter / CTA */}
+          {/* ✅ Support / Contact */}
           <div className="space-y-3">
             <h3 className="text-white font-bold">
               {t?.footerSupport || "Support"}
@@ -54,14 +58,43 @@ export default function Footer() {
                 "Want to support this project? Share the website with your friends or send feedback!"}
             </p>
 
+            {/* ✅ Email from translation (so it can change later easily) */}
             <motion.a
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              href="mailto:your-email@gmail.com"
+              href={`mailto:${t?.contactEmail || "cine.review.contact@gmail.com"}`}
               className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-semibold shadow-lg text-sm"
             >
               {t?.contactBtn || "Contact Us"}
             </motion.a>
+
+            {/* ✅ Social Links */}
+            <div className="flex items-center gap-3 pt-2">
+              <a
+                href="https://github.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://twitter.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                Twitter
+              </a>
+              <a
+                href="https://facebook.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                Facebook
+              </a>
+            </div>
           </div>
         </div>
 
