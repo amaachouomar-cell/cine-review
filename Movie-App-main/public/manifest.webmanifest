@@ -5,7 +5,13 @@
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ef4444",
+  "description": "Discover trending movies, rate them, and write your reviews.",
   "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
     {
       "src": "/favicon.png",
       "sizes": "512x512",
