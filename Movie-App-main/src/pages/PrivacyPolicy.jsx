@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export default function PrivacyPolicy() {
+export default function PrivacyPolicyPolicy() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -10,11 +10,11 @@ export default function PrivacyPolicy() {
     >
       <div className="max-w-4xl mx-auto pt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          Privacy <span className="text-red-500">Policy</span>
+          PrivacyPolicy <span className="text-red-500">Policy</span>
         </h1>
 
         <p className="text-gray-300 mt-5 leading-relaxed">
-          Your privacy is important to us. This Privacy Policy explains what data we collect and how we use it.
+          Your PrivacyPolicy is important to us. This PrivacyPolicy Policy explains what data we collect and how we use it.
         </p>
 
         <div className="mt-10 space-y-5">

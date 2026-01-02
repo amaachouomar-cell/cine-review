@@ -31,7 +31,7 @@ const translations = {
 
     about: "من نحن",
     contact: "تواصل معنا",
-    privacy: "سياسة الخصوصية",
+    PrivacyPolicy: "سياسة الخصوصية",
     terms: "الشروط والأحكام",
 
     footerLinks: "روابط",
@@ -93,7 +93,7 @@ const translations = {
 
     about: "About",
     contact: "Contact",
-    privacy: "Privacy Policy",
+    PrivacyPolicy: "PrivacyPolicy Policy",
     terms: "Terms",
 
     footerLinks: "Links",
