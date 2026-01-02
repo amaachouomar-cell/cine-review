@@ -13,7 +13,7 @@ import Reviews from "./pages/Reviews";
 
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import PrivacyPolicy from "./pages/Privacy";
+import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 
 import NotFound from "./pages/NotFound";
@@ -42,7 +42,7 @@ function AnimatedRoutes() {
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/Privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
 
           {/* ✅ Details */}
