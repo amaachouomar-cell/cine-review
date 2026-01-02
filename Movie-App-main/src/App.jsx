@@ -13,7 +13,7 @@ import Reviews from "./pages/Reviews";
 
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Privacy from "./pages/Privacy";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 
 import NotFound from "./pages/NotFound";
