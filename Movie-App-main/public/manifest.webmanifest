@@ -1,11 +1,11 @@
 {
   "name": "CineReview",
   "short_name": "CineReview",
+  "description": "Discover trending movies, rate them, and write your reviews.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#0b0b0f",
   "theme_color": "#ef4444",
-  "description": "Discover trending movies, rate them, and write your reviews.",
   "icons": [
     {
       "src": "/favicon.png",
