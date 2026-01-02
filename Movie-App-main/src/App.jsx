@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import Navbar from "./components/NavBar";
@@ -29,7 +24,7 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {/* ✅ Spacer */}
+      {/* ✅ Spacer بسلاسة */}
       <motion.div
         initial={false}
         animate={{ height: isDetailsPage ? 0 : 86 }}
@@ -45,7 +40,7 @@ function AnimatedRoutes() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
 
-          {/* ✅ Legal Pages */}
+          {/* ✅ Legal Pages (Important for AdSense) */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />

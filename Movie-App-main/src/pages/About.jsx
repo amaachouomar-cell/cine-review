@@ -1,69 +1,50 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
-import Navbar from "./components/NavBar";
-import Footer from "./components/Footer";
-
-import Home from "./pages/Home";
-import MovieDetails from "./pages/MovieDetails";
-import Favorites from "./pages/Favorites";
-import Trending from "./pages/Trending";
-import TopRated from "./pages/TopRated";
-import Reviews from "./pages/Reviews";
-
-// ✅ Pages for AdSense / SEO
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Terms from "./pages/Terms";
-
-import NotFound from "./pages/NotFound";
-
-function AnimatedRoutes() {
-  const location = useLocation();
-  const isDetailsPage = location.pathname.startsWith("/movie/");
-
+export default function About() {
   return (
-    <>
-      {/* ✅ Spacer بسلاسة */}
-      <motion.div
-        initial={false}
-        animate={{ height: isDetailsPage ? 0 : 86 }}
-        transition={{ duration: 0.25, ease: "easeInOut" }}
-      />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="min-h-screen px-4 pb-16 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white"
+    >
+      <div className="max-w-4xl mx-auto pt-12">
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+          About <span className="text-red-500">CineReview</span>
+        </h1>
 
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          {/* ✅ Main Pages */}
-          <Route path="/" element={<Home />} />
-          <Route path="/trending" element={<Trending />} />
-          <Route path="/top-rated" element={<TopRated />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/reviews" element={<Reviews />} />
+        <p className="text-gray-300 mt-5 leading-relaxed">
+          CineReview is a modern platform designed to help movie lovers discover trending films,
+          explore top-rated titles, and share honest reviews. We focus on speed, clean design,
+          and an easy user experience.
+        </p>
 
-          {/* ✅ Static SEO Pages */}
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<Terms />} />
+        <div className="mt-10 space-y-5">
+          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+            <h2 className="text-xl font-bold mb-2">✅ Our Mission</h2>
+            <p className="text-gray-300 leading-relaxed">
+              To offer a simple, fast, and high-quality movie discovery experience with real user reviews.
+            </p>
+          </div>
 
-          {/* ✅ Details */}
-          <Route path="/movie/:id" element={<MovieDetails />} />
+          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+            <h2 className="text-xl font-bold mb-2">🎬 What We Offer</h2>
+            <ul className="text-gray-300 space-y-2 list-disc list-inside">
+              <li>Trending movies updated weekly</li>
+              <li>Top-rated films with details</li>
+              <li>Favorites list</li>
+              <li>User reviews to build community trust</li>
+            </ul>
+          </div>
 
-          {/* ✅ NotFound */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AnimatePresence>
-    </>
-  );
-}
-
-export default function App() {
-  return (
-    <Router>
-      <Navbar />
-      <AnimatedRoutes />
-      <Footer />
-    </Router>
+          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+            <h2 className="text-xl font-bold mb-2">📌 Data Source</h2>
+            <p className="text-gray-300 leading-relaxed">
+              This website uses the TMDB API but is not endorsed or certified by TMDB.
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
