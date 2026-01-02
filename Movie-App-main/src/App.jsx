@@ -24,7 +24,6 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {/* ✅ Spacer بسلاسة */}
       <motion.div
         initial={false}
         animate={{ height: isDetailsPage ? 0 : 86 }}
@@ -40,7 +39,7 @@ function AnimatedRoutes() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
 
-          {/* ✅ Legal Pages (Important for AdSense) */}
+          {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
