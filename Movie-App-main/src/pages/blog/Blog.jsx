@@ -17,7 +17,7 @@ export default function Blog() {
 
         <p className="text-gray-300 mt-4 max-w-2xl leading-relaxed">
           مقالات حقيقية مكتوبة لمساعدتك في اكتشاف أفلام رائعة وفهم عالم السينما.
-          هذا المحتوى مهم جدا لتحسين SEO وقبول AdSense.
+
         </p>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
