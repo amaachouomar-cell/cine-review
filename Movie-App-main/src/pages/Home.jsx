@@ -263,6 +263,31 @@ export default function Home() {
           </button>
         </div>
       </div>
+      <div className="max-w-5xl mx-auto px-4 mt-16">
+  <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+    <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-4">
+      What is <span className="text-red-500">CineReview</span>?
+    </h2>
+
+    <p className="text-gray-300 leading-relaxed text-sm md:text-base">
+      CineReview is a modern platform where movie lovers can discover trending films,
+      explore top-rated titles, and read real reviews written by users. We focus on a smooth,
+      fast and premium experience while helping people choose what to watch next.
+    </p>
+
+    <div className="mt-6 space-y-2 text-gray-300 text-sm">
+      <p>✅ Browse trending movies updated weekly</p>
+      <p>✅ Save your favorites and track what you love</p>
+      <p>✅ Write reviews to help others and build community trust</p>
+    </div>
+
+    <p className="text-gray-400 text-xs mt-6">
+      This website uses the TMDB API but is not endorsed or certified by TMDB.
+    </p>
+  </div>
+</div>
+
     </motion.div>
+    
   );
 }
