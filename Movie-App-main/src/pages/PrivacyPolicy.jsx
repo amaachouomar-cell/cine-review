@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export default function PrivacyPolicyPolicy() {
+export default function PrivacyPolicy() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -10,32 +10,37 @@ export default function PrivacyPolicyPolicy() {
     >
       <div className="max-w-4xl mx-auto pt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          PrivacyPolicy <span className="text-red-500">Policy</span>
+          Privacy <span className="text-red-500">Policy</span>
         </h1>
 
         <p className="text-gray-300 mt-5 leading-relaxed">
-          Your PrivacyPolicy is important to us. This PrivacyPolicy Policy explains what data we collect and how we use it.
+          Your privacy is important to us. This Privacy Policy explains what information we collect and how we use it.
         </p>
 
         <div className="mt-10 space-y-5">
           <Section title="1) Information We Collect">
-            We do not collect personal information unless you voluntarily provide it (e.g., through email).
+            We do not collect personal information unless you voluntarily provide it (for example, by contacting us via email).
           </Section>
 
           <Section title="2) Cookies">
-            Our website may use cookies for analytics and performance improvements. Third-party services (like Google) may also set cookies.
+            Our website may use cookies to improve performance and user experience. Cookies are small files stored on your device. You can disable cookies through your browser settings if you prefer.
           </Section>
 
           <Section title="3) Third-Party Services">
-            We may use third-party tools such as Google Analytics or AdSense to understand usage and show ads. These services may collect data based on your browser behavior.
+            We may use third-party services such as Google Analytics or Google AdSense. These services may collect information (such as browsing behavior) to measure traffic or display relevant advertisements.
           </Section>
 
-          <Section title="4) Security">
-            We take reasonable measures to protect your data, but no method of online transmission is 100% secure.
+          <Section title="4) Google Advertising & Cookies">
+            Google may use cookies to serve ads based on a user's prior visits to this website or other websites.
+            Users may opt out of personalized advertising by visiting Google Ads Settings.
           </Section>
 
-          <Section title="5) Contact">
-            If you have any questions about this policy, contact us via email.
+          <Section title="5) Security">
+            We take reasonable steps to protect your data, but no method of transmission over the internet is 100% secure.
+          </Section>
+
+          <Section title="6) Contact Us">
+            If you have any questions about this policy, you can contact us anytime by email.
           </Section>
         </div>
       </div>
