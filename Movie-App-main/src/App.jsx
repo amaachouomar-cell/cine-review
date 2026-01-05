@@ -10,6 +10,8 @@ import Favorites from "./pages/Favorites";
 import Trending from "./pages/Trending";
 import TopRated from "./pages/TopRated";
 import Reviews from "./pages/Reviews";
+import Blog from "./pages/blog/Blog";
+import BlogPost from "./pages/blog/BlogPost";
 
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -38,6 +40,8 @@ function AnimatedRoutes() {
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
+<Route path="/blog" element={<Blog />} />
+<Route path="/blog/:slug" element={<BlogPost />} />
 
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
