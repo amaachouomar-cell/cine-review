@@ -42,10 +42,10 @@ function AnimatedRoutes() {
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
 
-          {/* ✅ Details */}
+          {/* ✅ Movie Details */}
           <Route path="/movie/:id" element={<MovieDetails />} />
 
           {/* ✅ NotFound */}
