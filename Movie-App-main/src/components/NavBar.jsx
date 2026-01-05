@@ -31,7 +31,7 @@ export default function Navbar() {
   const legalLinks = [
     { to: "/about", label: t.about || "About" },
     { to: "/contact", label: t.contact || "Contact" },
-    { to: "/PrivacyPolicy-policy", label: t.PrivacyPolicy || "PrivacyPolicy Policy" },
+    { to: "/privacy-policy", label: t.PrivacyPolicy || "PrivacyPolicy Policy" },
     { to: "/terms", label: t.terms || "Terms" },
   ];
 

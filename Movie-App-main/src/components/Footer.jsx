@@ -39,10 +39,10 @@ export default function Footer() {
             <div className="flex flex-col gap-2 text-sm">
               <FooterLink to="/about" label={t?.about || "About"} />
               <FooterLink to="/contact" label={t?.contact || "Contact"} />
-              <FooterLink to="/PrivacyPolicy-policy" label="PrivacyPolicy Policy" />
+              <FooterLink to="/privacy-policy" label="PrivacyPolicy Policy" />
 
               <FooterLink
-                to="/PrivacyPolicy-policy"
+                to="/privacy-policy"
                 label={t?.PrivacyPolicy || "PrivacyPolicy Policy"}
               />
               <FooterLink to="/terms" label={t?.terms || "Terms"} />
