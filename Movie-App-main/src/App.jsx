@@ -45,6 +45,7 @@ function AnimatedRoutes() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
 
+
           {/* ✅ Movie Details */}
           <Route path="/movie/:id" element={<MovieDetails />} />
 

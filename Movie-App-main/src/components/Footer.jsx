@@ -41,6 +41,7 @@ export default function Footer() {
   <FooterLink to="/contact" label={t?.contact || "Contact"} />
   <FooterLink to="/privacy-policy" label={t?.privacy || "Privacy Policy"} />
   <FooterLink to="/terms" label={t?.terms || "Terms"} />
+
 </div>
 
           </div>
