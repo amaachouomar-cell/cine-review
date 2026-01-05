@@ -20,7 +20,7 @@ export default function Contact() {
         <div className="mt-10 bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-5">
           <div>
             <p className="text-gray-400 text-sm">Email:</p>
-            <p className="text-white font-semibold">your-email@gmail.com</p>
+            <p className="text-white font-semibold">amaachou.omar@gmail.com</p>
           </div>
 
           <div>
