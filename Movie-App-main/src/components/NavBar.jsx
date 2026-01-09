@@ -25,6 +25,8 @@ export default function Navbar() {
     { to: "/reviews", label: t.reviews },
     { to: "/blog", label: t.blog || "Blog" },
     { to: "/quiz", label: t.quiz || "Quiz" },
+    { to: "/game", label: t.game || "Game" },
+
 
   ];
 

@@ -123,11 +123,14 @@ terms5Title: "5) تحديث الشروط",
 terms5Desc:
   "يمكن تحديث الشروط في أي وقت. استمرارك في استخدام الموقع يعني موافقتك عليها.",
 quiz: "🎮 اللعبة",
+game: "اللعبة",
 
 
   },
 
   en: {
+    game: "Game",
+
     trendingDesc: "The most trending movies this week.",
     trendingWeek: "Trending this week",
     noBackdrop: "No Backdrop",
