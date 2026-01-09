@@ -9,6 +9,7 @@ import Quiz from "./pages/Quiz";
 import Game from "./pages/Game";
 import Games from "./pages/Games";
 import GameDetails from "./pages/GameDetails";
+import CineJigsaw from "./pages/CineJigsaw";
 
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
@@ -49,6 +50,8 @@ function AnimatedRoutes() {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/quiz" element={<Quiz />} />
 <Route path="/reviews" element={<Reviews />} />
+<Route path="/cinejigsaw" element={<CineJigsaw />} />
+
 <Route path="/quiz" element={<Quiz />} />
 <Route path="/game" element={<Game />} />
 <Route path="/games" element={<Games />} />
@@ -65,6 +68,7 @@ function AnimatedRoutes() {
           <Route path="/terms" element={<Terms />} />
 <Route path="/faq" element={<FAQ />} />
 <Route path="/guidelines" element={<Guidelines />} />
+<Route path="/cinejigsaw" element={<CineJigsaw />} />
 
 
           {/* ✅ Movie Details */}

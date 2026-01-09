@@ -15,6 +15,18 @@ const gamesList = [
     color: "bg-red-600",
   },
   {
+  slug: "cinejigsaw",
+  titleEn: "CineJigsaw (Poster Puzzle)",
+  titleAr: "لعبة CineJigsaw (بازل بوسترات)",
+  descEn: "A beautiful movie poster puzzle with levels and stats.",
+  descAr: "لعبة بازل احترافية لبوسترات الأفلام مع مستويات وإحصائيات.",
+  levelEn: "Medium → Legendary",
+  levelAr: "متوسط → أسطوري",
+  badge: "🧩",
+  color: "bg-emerald-600",
+},
+
+  {
   slug: "cinerunner",
   titleEn: "CineRunner (Mario-like)",
   titleAr: "لعبة CineRunner",
