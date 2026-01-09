@@ -19,21 +19,18 @@ export default function Navbar() {
 
   // ✅ Main links
   const links = [
-  { to: "/", label: t.home },
-  { to: "/trending", label: t.trending },
-  { to: "/top-rated", label: t.topRated },
-  { to: "/favorites", label: t.favorites },
-  { to: "/reviews", label: t.reviews },
-
-];
-
-
+    { to: "/", label: t.home || "Home" },
+    { to: "/trending", label: t.trending || "Trending" },
+    { to: "/top-rated", label: t.topRated || "Top Rated" },
+    { to: "/favorites", label: t.favorites || "Favorites" },
+    { to: "/reviews", label: t.reviews || "Reviews" },
+  ];
 
   // ✅ Legal links (Important for Adsense)
   const legalLinks = [
     { to: "/about", label: t.about || "About" },
     { to: "/contact", label: t.contact || "Contact" },
-    { to: "/privacy-policy", label: t.PrivacyPolicy || "PrivacyPolicy Policy" },
+    { to: "/privacy-policy", label: t.privacy || "Privacy Policy" },
     { to: "/terms", label: t.terms || "Terms" },
   ];
 
@@ -47,9 +44,13 @@ export default function Navbar() {
           transition={{ duration: 0.35, ease: "easeInOut" }}
           className="sticky top-0 z-50"
         >
-          <div className="glass px-6 py-4 relative flex items-center justify-between">
+          {/* ✅ Navbar Container */}
+          <div className="glass px-6 py-4 relative flex items-center justify-between border-b border-white/10">
             {/* ✅ Logo */}
-            <NavLink to="/" className="text-xl font-bold tracking-wide z-10">
+            <NavLink
+              to="/"
+              className="text-xl font-extrabold tracking-wide z-10 select-none"
+            >
               🎬 <span className="text-red-500">Cine</span>Review
             </NavLink>
 
@@ -58,6 +59,20 @@ export default function Navbar() {
               {links.map((l) => (
                 <NavItem key={l.to} to={l.to} label={l.label} />
               ))}
+
+              {/* ✅ CTA Blog Button (BIG for AdSense) */}
+              <NavLink
+                to="/blog"
+                className={({ isActive }) =>
+                  `px-5 py-2 rounded-2xl font-bold transition shadow-lg border ${
+                    isActive
+                      ? "bg-red-600 text-white border-red-500 shadow-red-500/25"
+                      : "bg-red-600/90 text-white border-red-500/60 hover:bg-red-700 shadow-red-500/20"
+                  }`
+                }
+              >
+                📝 {t.blog || "Blog"}
+              </NavLink>
 
               {/* ✅ Dropdown: Legal links */}
               <div className="relative">
@@ -78,6 +93,10 @@ export default function Navbar() {
                       className="absolute top-12 left-0 w-56 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/90 backdrop-blur-xl shadow-xl"
                     >
                       <div className="flex flex-col p-2">
+                        <p className="text-xs text-gray-400 font-semibold px-4 py-2">
+                          {t.legal || "Legal"}
+                        </p>
+
                         {legalLinks.map((l) => (
                           <NavLink
                             key={l.to}
@@ -131,7 +150,7 @@ export default function Navbar() {
                 className="md:hidden glass px-4 pb-4 pt-2 border-t border-white/10"
               >
                 <div className="flex flex-col gap-2">
-                  {/* Main links */}
+                  {/* ✅ Main links */}
                   {links.map((l) => (
                     <NavLink
                       key={l.to}
@@ -147,7 +166,20 @@ export default function Navbar() {
                       {l.label}
                     </NavLink>
                   ))}
-                  
+
+                  {/* ✅ Blog CTA big mobile */}
+                  <NavLink
+                    to="/blog"
+                    className={({ isActive }) =>
+                      `px-4 py-3 rounded-2xl font-bold transition border shadow-lg ${
+                        isActive
+                          ? "bg-red-600 text-white border-red-500"
+                          : "bg-red-600/90 text-white border-red-500/60 hover:bg-red-700"
+                      }`
+                    }
+                  >
+                    📝 {t.blog || "Blog"}
+                  </NavLink>
 
                   {/* ✅ Legal links */}
                   <div className="mt-3 border-t border-white/10 pt-3">
@@ -170,13 +202,6 @@ export default function Navbar() {
                         {l.label}
                       </NavLink>
                     ))}
-                    <Link
-  to="/blog"
-  className="px-5 py-2 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-lg text-white text-sm md:text-base"
->
-  📝 Blog
-</Link>
-
                   </div>
                 </div>
               </motion.div>
@@ -202,6 +227,5 @@ function NavItem({ to, label }) {
     >
       {label}
     </NavLink>
-    
   );
 }
