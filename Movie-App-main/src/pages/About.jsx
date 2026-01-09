@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useLang } from "../i18n/LanguageContext";
 
 export default function About() {
+  const { t } = useLang();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -10,41 +13,35 @@ export default function About() {
     >
       <div className="max-w-4xl mx-auto pt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          About <span className="text-red-500">CineReview</span>
+          {t.aboutTitle}
         </h1>
 
-        <p className="text-gray-300 mt-5 leading-relaxed">
-          CineReview is a modern platform designed to help movie lovers discover trending films,
-          explore top-rated titles, and share honest reviews. We focus on speed, clean design,
-          and an easy user experience.
-        </p>
+        <p className="text-gray-300 mt-5 leading-relaxed">{t.aboutDesc}</p>
 
         <div className="mt-10 space-y-5">
-          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
-            <h2 className="text-xl font-bold mb-2">✅ Our Mission</h2>
-            <p className="text-gray-300 leading-relaxed">
-              To offer a simple, fast, and high-quality movie discovery experience with real user reviews.
-            </p>
-          </div>
+          <Section title={t.aboutMissionTitle}>{t.aboutMissionDesc}</Section>
 
-          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
-            <h2 className="text-xl font-bold mb-2">🎬 What We Offer</h2>
+          <Section title={t.aboutOfferTitle}>
             <ul className="text-gray-300 space-y-2 list-disc list-inside">
-              <li>Trending movies updated weekly</li>
-              <li>Top-rated films with details</li>
-              <li>Favorites list</li>
-              <li>User reviews to build community trust</li>
+              <li>{t.aboutOffer1}</li>
+              <li>{t.aboutOffer2}</li>
+              <li>{t.aboutOffer3}</li>
+              <li>{t.aboutOffer4}</li>
             </ul>
-          </div>
+          </Section>
 
-          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
-            <h2 className="text-xl font-bold mb-2">📌 Data Source</h2>
-            <p className="text-gray-300 leading-relaxed">
-              This website uses the TMDB API but is not endorsed or certified by TMDB.
-            </p>
-          </div>
+          <Section title={t.aboutDataTitle}>{t.aboutDataDesc}</Section>
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+      <h2 className="text-xl font-bold mb-2">{title}</h2>
+      <div className="text-gray-300 leading-relaxed">{children}</div>
+    </div>
   );
 }

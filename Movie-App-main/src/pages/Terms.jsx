@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useLang } from "../i18n/LanguageContext";
 
 export default function Terms() {
+  const { t } = useLang();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -10,33 +13,17 @@ export default function Terms() {
     >
       <div className="max-w-4xl mx-auto pt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          Terms & <span className="text-red-500">Conditions</span>
+          {t.termsTitle}
         </h1>
 
-        <p className="text-gray-300 mt-5 leading-relaxed">
-          By using CineReview, you agree to the following terms and conditions.
-        </p>
+        <p className="text-gray-300 mt-5 leading-relaxed">{t.termsDesc}</p>
 
         <div className="mt-10 space-y-5">
-          <Section title="1) Use of Website">
-            You agree to use this website for personal and lawful purposes only.
-          </Section>
-
-          <Section title="2) Content Accuracy">
-            We strive to keep movie data accurate, but information may be incomplete or outdated.
-          </Section>
-
-          <Section title="3) External Links">
-            Our site may contain links to third-party websites. We are not responsible for their content.
-          </Section>
-
-          <Section title="4) Disclaimer">
-            This site uses the TMDB API but is not endorsed or certified by TMDB.
-          </Section>
-
-          <Section title="5) Updates">
-            These terms may be updated at any time. Continued use of the site means acceptance of updates.
-          </Section>
+          <Section title={t.terms1Title}>{t.terms1Desc}</Section>
+          <Section title={t.terms2Title}>{t.terms2Desc}</Section>
+          <Section title={t.terms3Title}>{t.terms3Desc}</Section>
+          <Section title={t.terms4Title}>{t.terms4Desc}</Section>
+          <Section title={t.terms5Title}>{t.terms5Desc}</Section>
         </div>
       </div>
     </motion.div>

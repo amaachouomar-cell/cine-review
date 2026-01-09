@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useLang } from "../i18n/LanguageContext";
 
 export default function PrivacyPolicy() {
+  const { t } = useLang();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -10,38 +13,17 @@ export default function PrivacyPolicy() {
     >
       <div className="max-w-4xl mx-auto pt-12">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          Privacy <span className="text-red-500">Policy</span>
+          {t.privacyTitle}
         </h1>
 
-        <p className="text-gray-300 mt-5 leading-relaxed">
-          Your privacy is important to us. This Privacy Policy explains what information we collect and how we use it.
-        </p>
+        <p className="text-gray-300 mt-5 leading-relaxed">{t.privacyDesc}</p>
 
         <div className="mt-10 space-y-5">
-          <Section title="1) Information We Collect">
-            We do not collect personal information unless you voluntarily provide it (for example, by contacting us via email).
-          </Section>
-
-          <Section title="2) Cookies">
-            Our website may use cookies to improve performance and user experience. Cookies are small files stored on your device. You can disable cookies through your browser settings if you prefer.
-          </Section>
-
-          <Section title="3) Third-Party Services">
-            We may use third-party services such as Google Analytics or Google AdSense. These services may collect information (such as browsing behavior) to measure traffic or display relevant advertisements.
-          </Section>
-
-          <Section title="4) Google Advertising & Cookies">
-            Google may use cookies to serve ads based on a user's prior visits to this website or other websites.
-            Users may opt out of personalized advertising by visiting Google Ads Settings.
-          </Section>
-
-          <Section title="5) Security">
-            We take reasonable steps to protect your data, but no method of transmission over the internet is 100% secure.
-          </Section>
-
-          <Section title="6) Contact Us">
-            If you have any questions about this policy, you can contact us anytime by email.
-          </Section>
+          <Section title={t.privacy1Title}>{t.privacy1Desc}</Section>
+          <Section title={t.privacy2Title}>{t.privacy2Desc}</Section>
+          <Section title={t.privacy3Title}>{t.privacy3Desc}</Section>
+          <Section title={t.privacy4Title}>{t.privacy4Desc}</Section>
+          <Section title={t.privacy5Title}>{t.privacy5Desc}</Section>
         </div>
       </div>
     </motion.div>
