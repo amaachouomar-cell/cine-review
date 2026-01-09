@@ -48,7 +48,6 @@ function AnimatedRoutes() {
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
-          <Route path="/quiz" element={<Quiz />} />
 <Route path="/reviews" element={<Reviews />} />
 <Route path="/cinejigsaw" element={<CineJigsaw />} />
 
@@ -57,7 +56,6 @@ function AnimatedRoutes() {
 <Route path="/games" element={<Games />} />
 <Route path="/games/:slug" element={<GameDetails />} />
 <Route path="/cinequest" element={<CineQuest />} />
-
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
 
@@ -68,7 +66,6 @@ function AnimatedRoutes() {
           <Route path="/terms" element={<Terms />} />
 <Route path="/faq" element={<FAQ />} />
 <Route path="/guidelines" element={<Guidelines />} />
-<Route path="/cinejigsaw" element={<CineJigsaw />} />
 
 
           {/* ✅ Movie Details */}
