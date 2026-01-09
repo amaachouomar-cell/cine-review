@@ -125,11 +125,25 @@ terms5Desc:
 quiz: "🎮 اللعبة",
 game: "اللعبة",
 
+games: "الألعاب",
+gamesHub: "قسم الألعاب",
+gamesHubDesc: "اختر لعبة ممتعة مرتبطة بعالم الأفلام. ألعاب خفيفة وممتعة واحترافية.",
+details: "تفاصيل",
+start: "ابدأ الآن",
+howToPlay: "كيف تلعب؟",
+back: "رجوع للألعاب",
 
   },
 
   en: {
     game: "Game",
+games: "Games",
+gamesHub: "Games Hub",
+gamesHubDesc: "Pick a fun cinema-related game. Lightweight, engaging, and professional.",
+details: "Details",
+start: "Start",
+howToPlay: "How to play?",
+back: "Back to Games",
 
     trendingDesc: "The most trending movies this week.",
     trendingWeek: "Trending this week",

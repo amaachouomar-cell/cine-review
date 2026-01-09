@@ -7,6 +7,8 @@ import FAQ from "./pages/FAQ";
 import Guidelines from "./pages/Guidelines";
 import Quiz from "./pages/Quiz";
 import Game from "./pages/Game";
+import Games from "./pages/Games";
+import GameDetails from "./pages/GameDetails";
 
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
@@ -48,6 +50,8 @@ function AnimatedRoutes() {
 <Route path="/reviews" element={<Reviews />} />
 <Route path="/quiz" element={<Quiz />} />
 <Route path="/game" element={<Game />} />
+<Route path="/games" element={<Games />} />
+<Route path="/games/:slug" element={<GameDetails />} />
 
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
