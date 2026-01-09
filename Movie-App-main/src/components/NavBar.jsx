@@ -24,7 +24,9 @@ export default function Navbar() {
   { to: "/top-rated", label: t.topRated },
   { to: "/favorites", label: t.favorites },
   { to: "/reviews", label: t.reviews },
+
 ];
+
 
 
   // ✅ Legal links (Important for Adsense)
@@ -145,6 +147,7 @@ export default function Navbar() {
                       {l.label}
                     </NavLink>
                   ))}
+                  
 
                   {/* ✅ Legal links */}
                   <div className="mt-3 border-t border-white/10 pt-3">
@@ -167,6 +170,13 @@ export default function Navbar() {
                         {l.label}
                       </NavLink>
                     ))}
+                    <Link
+  to="/blog"
+  className="px-5 py-2 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-lg text-white text-sm md:text-base"
+>
+  📝 Blog
+</Link>
+
                   </div>
                 </div>
               </motion.div>
@@ -192,5 +202,6 @@ function NavItem({ to, label }) {
     >
       {label}
     </NavLink>
+    
   );
 }
