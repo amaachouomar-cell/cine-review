@@ -138,6 +138,7 @@ export default function Games() {
     : g.slug === "movie-quiz"
     ? "/quiz"
     : "/cinequest"
+    
 }
                   
                   className="px-5 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition font-semibold border border-white/10 text-sm"
