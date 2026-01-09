@@ -122,6 +122,7 @@ terms4Desc:
 terms5Title: "5) تحديث الشروط",
 terms5Desc:
   "يمكن تحديث الشروط في أي وقت. استمرارك في استخدام الموقع يعني موافقتك عليها.",
+quiz: "🎮 اللعبة",
 
 
   },
@@ -249,6 +250,7 @@ terms4Desc:
 terms5Title: "5) Updates",
 terms5Desc:
   "These terms may be updated anytime. Continued use means acceptance of any updates.",
+quiz: "🎮 Quiz",
 
   },
 };

@@ -5,6 +5,7 @@ import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
 import FAQ from "./pages/FAQ";
 import Guidelines from "./pages/Guidelines";
+import Quiz from "./pages/Quiz";
 
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
@@ -42,6 +43,10 @@ function AnimatedRoutes() {
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
+          <Route path="/quiz" element={<Quiz />} />
+<Route path="/reviews" element={<Reviews />} />
+<Route path="/quiz" element={<Quiz />} />
+
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
 

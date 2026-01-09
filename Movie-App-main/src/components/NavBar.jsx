@@ -24,6 +24,8 @@ export default function Navbar() {
     { to: "/favorites", label: t.favorites },
     { to: "/reviews", label: t.reviews },
     { to: "/blog", label: t.blog || "Blog" },
+    { to: "/quiz", label: t.quiz || "Quiz" },
+
   ];
 
   const legalLinks = [
