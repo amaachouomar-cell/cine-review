@@ -32,6 +32,8 @@ export default function Navbar() {
     { to: "/contact", label: t.contact || "Contact" },
     { to: "/privacy-policy", label: t.privacy || "Privacy Policy" },
     { to: "/terms", label: t.terms || "Terms" },
+    { to: "/faq", label: t.faq || "FAQ" },
+    { to: "/guidelines", label: t.guidelines || "Guidelines" },
   ];
 
   return (
@@ -111,7 +113,9 @@ export default function Navbar() {
                           >
                             {l.label}
                           </NavLink>
+                          
                         ))}
+                        
                       </div>
                     </motion.div>
                   )}

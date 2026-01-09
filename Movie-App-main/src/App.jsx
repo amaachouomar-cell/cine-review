@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
+import FAQ from "./pages/FAQ";
+import Guidelines from "./pages/Guidelines";
 
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
@@ -48,6 +50,8 @@ function AnimatedRoutes() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
+<Route path="/faq" element={<FAQ />} />
+<Route path="/guidelines" element={<Guidelines />} />
 
 
           {/* ✅ Movie Details */}

@@ -61,6 +61,9 @@ const translations = {
     noReviews: "لا توجد مراجعات بعد — ابدأ الآن ✨",
     blog: "المدونة",
 articles: "مقالات",
+faq: "الأسئلة الشائعة",
+guidelines: "قواعد المجتمع",
+
 
   },
 
@@ -127,6 +130,8 @@ articles: "مقالات",
     noReviews: "No reviews yet — start writing now ✨",
     blog: "Blog",
 articles: "Articles",
+faq: "FAQ",
+guidelines: "Community Guidelines",
 
   },
 };
