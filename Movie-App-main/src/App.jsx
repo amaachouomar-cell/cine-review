@@ -9,8 +9,6 @@ import Quiz from "./pages/Quiz";
 import Game from "./pages/Game";
 import Games from "./pages/Games";
 import GameDetails from "./pages/GameDetails";
-import CineJigsaw from "./pages/CineJigsaw";
-
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
 import Favorites from "./pages/Favorites";
@@ -19,7 +17,6 @@ import TopRated from "./pages/TopRated";
 import Reviews from "./pages/Reviews";
 import Blog from "./pages/blog/Blog";
 import BlogPost from "./pages/blog/BlogPost";
-
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -47,8 +44,6 @@ function AnimatedRoutes() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/quiz" element={<Quiz />} />
-          <Route path="/cinejigsaw" element={<CineJigsaw />} />
-
 <Route path="/quiz" element={<Quiz />} />
 <Route path="/game" element={<Game />} />
 <Route path="/games" element={<Games />} />
