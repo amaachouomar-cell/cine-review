@@ -27,9 +27,9 @@ const gamesList = [
 },
 
   {
-  slug: "cinerunner",
-  titleEn: "CineRunner (Mario-like)",
-  titleAr: "لعبة CineRunner",
+  slug: "CineQuest",
+  titleEn: "CineQuest (Mario-like)",
+  titleAr: "لعبة CineQuest",
   descEn: "A real Mario-style platformer inside CineReview.",
   descAr: "لعبة منصات مثل ماريو داخل CineReview.",
   levelEn: "Hard",
@@ -49,17 +49,6 @@ const gamesList = [
     badge: "🧠",
     color: "bg-indigo-600",
   },
-  {
-  slug: "cinequest",
-  titleEn: "CineQuest (Adventure Game)",
-  titleAr: "مغامرة CineQuest",
-  descEn: "A real 2D adventure game: choose your hero, collect tickets, beat obstacles, and finish levels!",
-  descAr: "لعبة مغامرات ثنائية الأبعاد: اختر بطلك، اجمع التذاكر، تجاوز العوائق وأكمل المراحل!",
-  levelEn: "Hard",
-  levelAr: "صعب",
-  badge: "🕹️",
-  color: "bg-emerald-600",
-},
 
 ];
 

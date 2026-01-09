@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useLang } from "../i18n/LanguageContext";
 
-export default function CineRunner() {
+export default function CineQuest() {
   const { lang } = useLang();
 
   const canvasRef = useRef(null);
@@ -329,7 +329,7 @@ export default function CineRunner() {
           transition={{ duration: 0.35 }}
           className="text-3xl md:text-5xl font-extrabold tracking-tight"
         >
-          🎮 CineRunner
+          🎮 CineQuest
         </motion.h1>
 
         <p className="text-gray-400 mt-3 max-w-3xl">

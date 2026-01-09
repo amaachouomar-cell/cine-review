@@ -3,29 +3,38 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
-import FAQ from "./pages/FAQ";
-import Guidelines from "./pages/Guidelines";
-import Quiz from "./pages/Quiz";
-import Game from "./pages/Game";
-import Games from "./pages/Games";
-import GameDetails from "./pages/GameDetails";
-import CineJigsaw from "./pages/CineJigsaw";
 
+// ✅ Main pages
 import Home from "./pages/Home";
-import MovieDetails from "./pages/MovieDetails";
-import Favorites from "./pages/Favorites";
 import Trending from "./pages/Trending";
 import TopRated from "./pages/TopRated";
+import Favorites from "./pages/Favorites";
 import Reviews from "./pages/Reviews";
+import MovieDetails from "./pages/MovieDetails";
+
+// ✅ Blog
 import Blog from "./pages/blog/Blog";
 import BlogPost from "./pages/blog/BlogPost";
 
+// ✅ Legal pages
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
-import CineQuest from "./pages/CineQuest";
 
+// ✅ Help pages
+import FAQ from "./pages/FAQ";
+import Guidelines from "./pages/Guidelines";
+
+// ✅ Games system
+import Quiz from "./pages/Quiz";
+import Game from "./pages/Game";
+import Games from "./pages/Games";
+import GameDetails from "./pages/GameDetails";
+import CineQuest from "./pages/CineQuest";
+import CineJigsaw from "./pages/CineJigsaw";
+
+// ✅ NotFound
 import NotFound from "./pages/NotFound";
 
 function AnimatedRoutes() {
@@ -34,6 +43,7 @@ function AnimatedRoutes() {
 
   return (
     <>
+      {/* ✅ Smooth spacer */}
       <motion.div
         initial={false}
         animate={{ height: isDetailsPage ? 0 : 86 }}
@@ -42,31 +52,34 @@ function AnimatedRoutes() {
 
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* ✅ Main Pages */}
+          {/* ✅ Main */}
           <Route path="/" element={<Home />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
-<Route path="/reviews" element={<Reviews />} />
-<Route path="/cinejigsaw" element={<CineJigsaw />} />
 
-<Route path="/quiz" element={<Quiz />} />
-<Route path="/game" element={<Game />} />
-<Route path="/games" element={<Games />} />
-<Route path="/games/:slug" element={<GameDetails />} />
-<Route path="/cinequest" element={<CineQuest />} />
-<Route path="/blog" element={<Blog />} />
-<Route path="/blog/:slug" element={<BlogPost />} />
+          {/* ✅ Blog */}
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* ✅ Legal Pages */}
+          {/* ✅ Games */}
+          <Route path="/games" element={<Games />} />
+          <Route path="/games/:slug" element={<GameDetails />} />
+          <Route path="/quiz" element={<Quiz />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/cinequest" element={<CineQuest />} />
+          <Route path="/cinejigsaw" element={<CineJigsaw />} />
+
+          {/* ✅ Legal */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
-<Route path="/faq" element={<FAQ />} />
-<Route path="/guidelines" element={<Guidelines />} />
 
+          {/* ✅ Help */}
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/guidelines" element={<Guidelines />} />
 
           {/* ✅ Movie Details */}
           <Route path="/movie/:id" element={<MovieDetails />} />
