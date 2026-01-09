@@ -60,6 +60,8 @@ const translations = {
     delete: "حذف",
     noReviews: "لا توجد مراجعات بعد — ابدأ الآن ✨",
     blog: "المدونة",
+articles: "مقالات",
+
   },
 
   en: {
@@ -123,6 +125,9 @@ const translations = {
     publish: "Publish",
     delete: "Delete",
     noReviews: "No reviews yet — start writing now ✨",
+    blog: "Blog",
+articles: "Articles",
+
   },
 };
 
