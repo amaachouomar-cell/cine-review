@@ -59,6 +59,7 @@ const translations = {
     publish: "نشر",
     delete: "حذف",
     noReviews: "لا توجد مراجعات بعد — ابدأ الآن ✨",
+    blog: "المدونة",
   },
 
   en: {
