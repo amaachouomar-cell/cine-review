@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLang } from "../i18n/LanguageContext";
 
 const gamesList = {
+  
   "guess-movie": {
     titleEn: "Guess The Movie",
     titleAr: "خمن الفيلم",
@@ -26,6 +27,7 @@ const gamesList = {
     badge: "🎬",
     color: "bg-red-600",
   },
+  
 
   "movie-quiz": {
     titleEn: "Movie Quiz",
@@ -48,6 +50,7 @@ const gamesList = {
     badge: "🧠",
     color: "bg-indigo-600",
   },
+  
   "cinequest": {
   titleEn: "CineQuest (Adventure Game)",
   titleAr: "مغامرة CineQuest",
@@ -73,6 +76,7 @@ const gamesList = {
   badge: "🕹️",
   color: "bg-emerald-600",
 },
+
 
 };
 

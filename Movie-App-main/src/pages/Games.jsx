@@ -15,6 +15,18 @@ const gamesList = [
     color: "bg-red-600",
   },
   {
+  slug: "cinerunner",
+  titleEn: "CineRunner (Mario-like)",
+  titleAr: "لعبة CineRunner",
+  descEn: "A real Mario-style platformer inside CineReview.",
+  descAr: "لعبة منصات مثل ماريو داخل CineReview.",
+  levelEn: "Hard",
+  levelAr: "صعب",
+  badge: "🏃",
+  color: "bg-blue-600",
+},
+
+  {
     slug: "movie-quiz",
     titleEn: "Movie Quiz",
     titleAr: "اختبار الأفلام",
