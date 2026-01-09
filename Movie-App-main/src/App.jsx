@@ -24,8 +24,6 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
-import CineQuest from "./pages/CineQuest";
-
 import NotFound from "./pages/NotFound";
 
 function AnimatedRoutes() {
@@ -55,7 +53,6 @@ function AnimatedRoutes() {
 <Route path="/game" element={<Game />} />
 <Route path="/games" element={<Games />} />
 <Route path="/games/:slug" element={<GameDetails />} />
-<Route path="/cinequest" element={<CineQuest />} />
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
 
