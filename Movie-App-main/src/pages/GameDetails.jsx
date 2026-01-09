@@ -48,6 +48,32 @@ const gamesList = {
     badge: "🧠",
     color: "bg-indigo-600",
   },
+  "cinequest": {
+  titleEn: "CineQuest (Adventure Game)",
+  titleAr: "مغامرة CineQuest",
+  descEn:
+    "A real 2D adventure game inside CineReview. Choose your hero, collect movie tickets, dodge obstacles, and progress through levels.",
+  descAr:
+    "لعبة مغامرات ثنائية الأبعاد داخل CineReview. اختر شخصيتك، اجمع تذاكر السينما، تفادى العوائق و انتقل عبر مراحل كثيرة.",
+  howEn: [
+    "Pick your hero before starting.",
+    "Move using arrows (or touch on mobile).",
+    "Jump to avoid obstacles and enemies.",
+    "Collect 🎟️ tickets to unlock the next level.",
+    "Finish levels to earn bonus rewards.",
+  ],
+  howAr: [
+    "اختر شخصيتك قبل البداية.",
+    "تحرك باستخدام الأسهم (أو أزرار الهاتف).",
+    "اقفز لتفادي العوائق والأعداء.",
+    "اجمع 🎟️ التذاكر لفتح المرحلة التالية.",
+    "أكمل المراحل للحصول على مكافآت.",
+  ],
+  startLink: "/cinequest",
+  badge: "🕹️",
+  color: "bg-emerald-600",
+},
+
 };
 
 export default function GameDetails() {

@@ -132,12 +132,15 @@ details: "تفاصيل",
 start: "ابدأ الآن",
 howToPlay: "كيف تلعب؟",
 back: "رجوع للألعاب",
+cinequest: "مغامرة CineQuest",
 
   },
 
   en: {
     game: "Game",
 games: "Games",
+cinequest: "CineQuest Adventure",
+
 gamesHub: "Games Hub",
 gamesHubDesc: "Pick a fun cinema-related game. Lightweight, engaging, and professional.",
 details: "Details",

@@ -25,6 +25,18 @@ const gamesList = [
     badge: "🧠",
     color: "bg-indigo-600",
   },
+  {
+  slug: "cinequest",
+  titleEn: "CineQuest (Adventure Game)",
+  titleAr: "مغامرة CineQuest",
+  descEn: "A real 2D adventure game: choose your hero, collect tickets, beat obstacles, and finish levels!",
+  descAr: "لعبة مغامرات ثنائية الأبعاد: اختر بطلك، اجمع التذاكر، تجاوز العوائق وأكمل المراحل!",
+  levelEn: "Hard",
+  levelAr: "صعب",
+  badge: "🕹️",
+  color: "bg-emerald-600",
+},
+
 ];
 
 export default function Games() {
@@ -96,14 +108,18 @@ export default function Games() {
                 </NavLink>
 
                 <NavLink
-                  to={
-                    g.slug === "guess-movie"
-                      ? "/game"
-                      : "/quiz"
-                  }
+                to={
+  g.slug === "guess-movie"
+    ? "/game"
+    : g.slug === "movie-quiz"
+    ? "/quiz"
+    : "/cinequest"
+}
+                  
                   className="px-5 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition font-semibold border border-white/10 text-sm"
                 >
                   {t?.start || (lang === "ar" ? "ابدأ الآن" : "Start")}
+              
                 </NavLink>
               </div>
             </motion.div>
