@@ -3,152 +3,179 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const TMDB_IMG = "https://image.tmdb.org/t/p/w780";
 
-// ✅ Difficulty config
-const DIFFICULTY = {
-  easy: { time: 25, choices: 3, blur: 0.6, label: { ar: "سهل", en: "Easy" } },
-  medium: { time: 18, choices: 4, blur: 1.3, label: { ar: "متوسط", en: "Medium" } },
-  hard: { time: 12, choices: 5, blur: 2.2, label: { ar: "صعب", en: "Hard" } },
+const DIFFICULTIES = {
+  easy: { time: 20, points: 10, labelAr: "سهل", labelEn: "Easy", emoji: "🟢" },
+  medium: { time: 16, points: 15, labelAr: "متوسط", labelEn: "Medium", emoji: "🟡" },
+  hard: { time: 12, points: 25, labelAr: "صعب", labelEn: "Hard", emoji: "🔴" },
 };
 
-// ✅ Genres
 const GENRES = [
-  { id: 0, label: { ar: "🔥 الرائج", en: "🔥 Trending" }, icon: "🔥" },
-  { id: 28, label: { ar: "💥 أكشن", en: "💥 Action" }, icon: "💥" },
-  { id: 35, label: { ar: "😂 كوميديا", en: "😂 Comedy" }, icon: "😂" },
-  { id: 27, label: { ar: "😱 رعب", en: "😱 Horror" }, icon: "😱" },
-  { id: 18, label: { ar: "🎭 دراما", en: "🎭 Drama" }, icon: "🎭" },
-  { id: 16, label: { ar: "🧸 أنيميشن", en: "🧸 Animation" }, icon: "🧸" },
-  { id: 878, label: { ar: "👽 خيال علمي", en: "👽 Sci-Fi" }, icon: "👽" },
-  { id: 53, label: { ar: "🕵️ إثارة", en: "🕵️ Thriller" }, icon: "🕵️" },
+  { id: 28, ar: "أكشن", en: "Action", emoji: "💥" },
+  { id: 35, ar: "كوميديا", en: "Comedy", emoji: "😂" },
+  { id: 18, ar: "دراما", en: "Drama", emoji: "🎭" },
+  { id: 27, ar: "رعب", en: "Horror", emoji: "👻" },
+  { id: 10749, ar: "رومانسي", en: "Romance", emoji: "❤️" },
+  { id: 9648, ar: "غموض", en: "Mystery", emoji: "🕵️‍♂️" },
+  { id: 16, ar: "أنيميشن", en: "Animation", emoji: "🎨" },
 ];
 
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(n, max));
-}
 function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function useSound(url, vol = 0.6) {
+  const audioRef = useRef(null);
+  useEffect(() => {
+    const a = new Audio(url);
+    a.volume = vol;
+    audioRef.current = a;
+  }, [url, vol]);
+
+  return () => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => {});
+  };
 }
 
 export default function Quiz() {
   const { lang } = useLang();
 
-  // ✅ stage: "select" -> "play"
-  const [stage, setStage] = useState("select");
+  // ✅ Steps
+  const [step, setStep] = useState("pick"); 
+  // pick | play | end
 
-  // ✅ selections
-  const [difficulty, setDifficulty] = useState("medium");
-  const [genre, setGenre] = useState(0);
+  const [genre, setGenre] = useState(null);
+  const [difficulty, setDifficulty] = useState("easy");
 
-  // ✅ data
-  const [loading, setLoading] = useState(false);
-  const [movies, setMovies] = useState([]);
-  const [current, setCurrent] = useState(null);
-  const [choices, setChoices] = useState([]);
+  // ✅ Quiz Data
+  const [questions, setQuestions] = useState([]);
+  const [current, setCurrent] = useState(0);
+  const currentQ = questions[current];
 
-  // ✅ gameplay
+  // ✅ Game States
+  const [options, setOptions] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [answerLocked, setAnswerLocked] = useState(false);
+
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [bestStreak, setBestStreak] = useState(0);
-  const [round, setRound] = useState(1);
-  const [xp, setXp] = useState(0); // 🎮 Level XP
+  const [xp, setXp] = useState(0);
 
-  const [selected, setSelected] = useState(null);
-  const [locked, setLocked] = useState(false);
-  const [result, setResult] = useState(null);
-
-  // ✅ timer
-  const [timeLeft, setTimeLeft] = useState(DIFFICULTY[difficulty].time);
+  // ✅ Timer
+  const [time, setTime] = useState(DIFFICULTIES[difficulty].time);
   const timerRef = useRef(null);
 
-  // ✅ hint
+  // ✅ Loading
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [loadingQ, setLoadingQ] = useState(false);
+
+  // ✅ Power Ups
   const [hintUsed, setHintUsed] = useState(false);
-  const [hintText, setHintText] = useState("");
+  const [extraTimeUsed, setExtraTimeUsed] = useState(false);
+  const [removeTwoUsed, setRemoveTwoUsed] = useState(false);
+  const [removedOptions, setRemovedOptions] = useState([]);
 
-  // ✅ effects
-  const [shake, setShake] = useState(false);
+  // ✅ Best Score
+  const bestScore = useMemo(() => {
+    return Number(localStorage.getItem("cine_best_score") || 0);
+  }, [step]);
 
-  const config = useMemo(() => DIFFICULTY[difficulty], [difficulty]);
+  // ✅ Sounds (يمكنك تغيير الملفات بصوتك)
+  const playCorrect = useSound("https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-reward-952.mp3", 0.7);
+  const playWrong = useSound("https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3", 0.7);
+  const playTick = useSound("https://assets.mixkit.co/sfx/preview/mixkit-quick-positive-switch-2586.mp3", 0.35);
+  const playWin = useSound("https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3", 0.65);
 
-  const level = useMemo(() => Math.floor(xp / 60) + 1, [xp]);
-  const xpProgress = useMemo(() => xp % 60, [xp]);
-
-  // ✅ start (fetch + play)
-  async function startGame() {
-    setScore(0);
-    setStreak(0);
-    setBestStreak(0);
-    setRound(1);
-    setXp(0);
-    setStage("play");
-    await fetchMovies();
+  // ✅ Start
+  async function startQuiz(selectedGenre) {
+    setGenre(selectedGenre);
+    setStep("play");
+    resetGame();
+    await fetchQuestions(selectedGenre.id);
   }
 
-  async function fetchMovies() {
+  function resetGame() {
+    setScore(0);
+    setStreak(0);
+    setXp(0);
+    setCurrent(0);
+    setQuestions([]);
+    setOptions([]);
+    setSelected(null);
+    setAnswerLocked(false);
+    setHintUsed(false);
+    setExtraTimeUsed(false);
+    setRemoveTwoUsed(false);
+    setRemovedOptions([]);
+  }
+
+  async function fetchQuestions(genreId) {
     try {
-      setLoading(true);
+      setLoadingQ(true);
+      const key = import.meta.env.VITE_TMDB_API_KEY;
 
-      const page = Math.floor(Math.random() * 8) + 1;
-      const language = lang === "ar" ? "ar" : "en-US";
+      const res = await fetch(
+        `https://api.themoviedb.org/3/discover/movie?api_key=${key}&with_genres=${genreId}&sort_by=popularity.desc&language=en-US&page=1`
+      );
 
-      const endpoint =
-        genre === 0
-          ? `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=${language}&page=${page}`
-          : `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=${language}&sort_by=popularity.desc&with_genres=${genre}&page=${page}`;
-
-      const res = await fetch(endpoint);
       const data = await res.json();
+      const picked = shuffle(data.results).slice(0, 10);
 
-      const clean = (data?.results || [])
-        .filter((m) => m?.title && (m?.backdrop_path || m?.poster_path) && m?.vote_count > 100)
-        .slice(0, 24);
-
-      setMovies(clean);
-      setTimeout(() => {
-        newRound(clean);
-      }, 350);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      setQuestions(picked);
+      setLoadingQ(false);
+    } catch (err) {
+      console.error(err);
+      setLoadingQ(false);
     }
   }
 
-  function newRound(list) {
-    if (!list?.length) return;
-
-    setLocked(false);
-    setSelected(null);
-    setResult(null);
-    setHintUsed(false);
-    setHintText("");
-
-    const candidate = list[Math.floor(Math.random() * list.length)];
-    setCurrent(candidate);
-
-    const others = shuffle(list.filter((m) => m.id !== candidate.id)).slice(0, config.choices - 1);
-    const all = shuffle([candidate, ...others]);
-
-    setChoices(all);
-    setTimeLeft(config.time);
-  }
-
-  // ✅ Timer system
+  // ✅ Prepare options on question change
   useEffect(() => {
-    if (stage !== "play" || !current || locked) return;
+    if (!currentQ) return;
+
+    setImageLoaded(false);
+    setAnswerLocked(false);
+    setSelected(null);
+    setRemovedOptions([]);
+
+    setHintUsed(false);
+    setExtraTimeUsed(false);
+    setRemoveTwoUsed(false);
+
+    const correctTitle = currentQ.title;
+    const wrongTitles = shuffle(
+      questions
+        .filter((q) => q.id !== currentQ.id)
+        .map((q) => q.title)
+        .slice(0, 3)
+    );
+
+    setOptions(shuffle([correctTitle, ...wrongTitles]));
+
+    // ✅ Preload next
+    const next = questions[current + 1];
+    if (next?.backdrop_path) {
+      const img = new Image();
+      img.src = TMDB_IMG + next.backdrop_path;
+    }
+  }, [current, currentQ]);
+
+  // ✅ Timer only after imageLoaded
+  useEffect(() => {
+    if (!currentQ || !imageLoaded) return;
 
     clearInterval(timerRef.current);
+    setTime(DIFFICULTIES[difficulty].time);
+
     timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
+      setTime((t) => {
+        if (t <= 4) playTick();
         if (t <= 1) {
           clearInterval(timerRef.current);
-          onTimeUp();
+          handleTimeout();
           return 0;
         }
         return t - 1;
@@ -156,399 +183,369 @@ export default function Quiz() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-    // eslint-disable-next-line
-  }, [current, locked, stage]);
+  }, [imageLoaded, currentQ, difficulty]);
 
-  function onTimeUp() {
-    if (locked) return;
-    setLocked(true);
-    setResult("wrong");
+  function handleTimeout() {
+    if (answerLocked) return;
+    setAnswerLocked(true);
+    setSelected("timeout");
     setStreak(0);
-    setBestStreak((b) => Math.max(b, streak));
-    setShake(true);
-    setTimeout(() => setShake(false), 400);
+
+    setTimeout(() => nextQuestion(), 1200);
   }
 
-  function pick(movie) {
-    if (locked) return;
+  function calcPoints() {
+    const base = DIFFICULTIES[difficulty].points;
+    const combo = streak >= 2 ? Math.floor(base * (1 + streak * 0.08)) : base;
+    return combo;
+  }
 
-    setSelected(movie.id);
-    setLocked(true);
+  function winConfetti() {
+    confetti({
+      particleCount: 120,
+      spread: 85,
+      origin: { y: 0.55 },
+    });
+  }
 
-    const correct = movie.id === current.id;
+  function handleAnswer(opt) {
+    if (answerLocked) return;
 
-    if (correct) {
-      setResult("correct");
+    setAnswerLocked(true);
+    setSelected(opt);
 
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.75 },
-      });
+    const isCorrect = opt === currentQ.title;
 
-      const bonus = hintUsed ? 6 : 10;
-      const streakBonus = clamp(streak + 1, 1, 10);
+    if (isCorrect) {
+      playCorrect();
+      const pts = calcPoints();
 
-      setScore((s) => s + bonus + streakBonus);
+      setScore((s) => s + pts);
       setStreak((st) => st + 1);
-      setBestStreak((b) => Math.max(b, streak + 1));
-      setXp((x) => x + 12 + streakBonus);
+      setXp((x) => x + 12);
+
+      if (streak + 1 >= 3) {
+        winConfetti();
+      }
     } else {
-      setResult("wrong");
+      playWrong();
       setStreak(0);
-      setBestStreak((b) => Math.max(b, streak));
-      setShake(true);
-      setTimeout(() => setShake(false), 400);
     }
+
+    setTimeout(() => nextQuestion(), 1200);
   }
 
-  function next() {
-    setRound((r) => r + 1);
-    if (round % 6 === 0) fetchMovies();
-    else newRound(movies);
+  function nextQuestion() {
+    if (current + 1 >= questions.length) {
+      endGame();
+      return;
+    }
+    setCurrent((c) => c + 1);
   }
 
-  function resetToSelect() {
-    setStage("select");
-    setMovies([]);
-    setCurrent(null);
-    setChoices([]);
-    setHintText("");
-    setSelected(null);
-    setLocked(false);
-    setResult(null);
+  function endGame() {
+    setStep("end");
+    clearInterval(timerRef.current);
+
+    const oldBest = Number(localStorage.getItem("cine_best_score") || 0);
+    if (score > oldBest) {
+      localStorage.setItem("cine_best_score", String(score));
+    }
+
+    playWin();
+    winConfetti();
   }
 
+  function restart() {
+    setStep("pick");
+    setGenre(null);
+    resetGame();
+  }
+
+  // ✅ Power Ups
   function useHint() {
-    if (hintUsed || locked || !current) return;
+    if (hintUsed || answerLocked) return;
     setHintUsed(true);
-
-    const year = current.release_date?.slice(0, 4) || "—";
-    const rating = current.vote_average ? current.vote_average.toFixed(1) : "—";
-
-    setHintText(
-      lang === "ar"
-        ? `🎯 تلميح: سنة الإصدار ${year} | التقييم ${rating}/10`
-        : `🎯 Hint: Release year ${year} | Rating ${rating}/10`
-    );
+    // hint: highlight correct option
+    setSelected("hint");
   }
 
-  // ✅ image handling
-  const imageUrl = current?.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${current.backdrop_path}`
-    : current?.poster_path
-    ? `https://image.tmdb.org/t/p/w780${current.poster_path}`
-    : null;
-
-  const isPosterFallback = !current?.backdrop_path && !!current?.poster_path;
-  const progress = (timeLeft / config.time) * 100;
-
-  // ✅ SELECT SCREEN (Stage 1)
-  if (stage === "select") {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white px-4 pb-20">
-        <div className="max-w-6xl mx-auto pt-14">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-              🎬 {lang === "ar" ? "خمن الفيلم" : "Guess The Movie"}
-            </h1>
-
-            <p className="text-gray-300 mt-4 max-w-2xl mx-auto leading-relaxed">
-              {lang === "ar"
-                ? "اختر فئة الأفلام وصعوبة اللعبة ثم ابدأ! هذه اللعبة تجعل الزائر يقضي وقتاً ممتعاً داخل موقعك 🎮"
-                : "Choose a movie category & difficulty, then start! This game keeps visitors engaged 🎮"}
-            </p>
-          </motion.div>
-
-          {/* ✅ choose genre */}
-          <div className="mt-10">
-            <h2 className="text-xl md:text-2xl font-bold text-center">
-              {lang === "ar" ? "اختر الفئة" : "Choose Category"}
-            </h2>
-
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {GENRES.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => setGenre(g.id)}
-                  className={`rounded-3xl border p-5 text-center transition relative overflow-hidden ${
-                    genre === g.id
-                      ? "bg-red-600 border-red-500 shadow-lg shadow-red-500/25"
-                      : "bg-zinc-900/40 border-white/10 hover:bg-zinc-800"
-                  }`}
-                >
-                  <div className="text-3xl">{g.icon}</div>
-                  <div className="mt-2 font-bold">{g.label[lang]}</div>
-                  {genre === g.id && (
-                    <motion.div
-                      layoutId="genreActive"
-                      className="absolute inset-0 border-2 border-white/20 rounded-3xl"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ✅ choose difficulty */}
-          <div className="mt-12">
-            <h2 className="text-xl md:text-2xl font-bold text-center">
-              {lang === "ar" ? "اختر الصعوبة" : "Choose Difficulty"}
-            </h2>
-
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              {Object.keys(DIFFICULTY).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setDifficulty(k)}
-                  className={`px-7 py-4 rounded-3xl font-bold text-sm md:text-base border transition ${
-                    difficulty === k
-                      ? "bg-white text-black border-white shadow-xl"
-                      : "bg-zinc-900/40 border-white/10 text-gray-200 hover:bg-zinc-800"
-                  }`}
-                >
-                  {DIFFICULTY[k].label[lang]} • {DIFFICULTY[k].time}s
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ✅ CTA Start */}
-          <div className="mt-14 flex justify-center">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={startGame}
-              className="px-10 py-5 rounded-3xl bg-red-600 hover:bg-red-700 transition font-extrabold text-lg shadow-2xl shadow-red-500/25"
-            >
-              🚀 {lang === "ar" ? "ابدأ اللعبة الآن" : "Start The Game"}
-            </motion.button>
-          </div>
-        </div>
-      </div>
-    );
+  function useExtraTime() {
+    if (extraTimeUsed || answerLocked) return;
+    setExtraTimeUsed(true);
+    setTime((t) => t + 6);
   }
 
-  // ✅ PLAY SCREEN (Stage 2)
+  function useRemoveTwo() {
+    if (removeTwoUsed || answerLocked) return;
+    setRemoveTwoUsed(true);
+    const wrongs = options.filter((o) => o !== currentQ.title);
+    setRemovedOptions(shuffle(wrongs).slice(0, 2));
+  }
+
+  // ✅ UI Text
+  const title = lang === "ar" ? "🎬 خمن الفيلم (Pro)" : "🎬 Guess The Movie (Pro)";
+  const desc =
+    lang === "ar"
+      ? "اختر فئة + صعوبة، ثم خمن الفيلم من الصورة! لديك أدوات مساعدة وCombo!"
+      : "Pick a category + difficulty, then guess the movie! Use power-ups & build combos!";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white px-4 pb-20">
-      <div className="max-w-6xl mx-auto pt-10">
-        {/* ✅ Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-              🎬 {lang === "ar" ? "خمن الفيلم" : "Guess The Movie"}
-            </h1>
+    <div className="min-h-screen px-4 pb-20 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
+      <div className="max-w-4xl mx-auto pt-12">
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+          {title}
+        </h1>
+        <p className="text-gray-300 mt-3 leading-relaxed">{desc}</p>
 
-            <p className="text-gray-300 mt-3 max-w-2xl leading-relaxed">
-              {lang === "ar"
-                ? "اختر العنوان الصحيح قبل انتهاء الوقت! كلما ربحت أكثر تحصل على مستوى أعلى."
-                : "Pick the correct title before time runs out! Win streaks to level up."}
-            </p>
-          </div>
+        {/* ✅ STEP PICK */}
+        {step === "pick" && (
+          <div className="mt-10 space-y-8">
+            {/* Difficulty */}
+            <div>
+              <h2 className="text-xl font-bold mb-4">
+                {lang === "ar" ? "اختر الصعوبة" : "Choose Difficulty"}
+              </h2>
 
-          {/* ✅ Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <Stat label={lang === "ar" ? "النقاط" : "Score"} value={score} />
-            <Stat label={lang === "ar" ? "سلسلة" : "Streak"} value={streak} />
-            <Stat label={lang === "ar" ? "الأفضل" : "Best"} value={bestStreak} />
-            <Stat label={lang === "ar" ? "الجولة" : "Round"} value={round} />
-            <Stat label={lang === "ar" ? `المستوى ${level}` : `Level ${level}`} value={`${xpProgress}/60`} />
-          </div>
-        </div>
-
-        {/* ✅ Actions */}
-        <div className="mt-6 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={useHint}
-              disabled={hintUsed || locked}
-              className={`px-4 py-3 rounded-2xl font-bold text-sm transition ${
-                hintUsed || locked
-                  ? "bg-zinc-800 text-gray-500 cursor-not-allowed"
-                  : "bg-white/10 hover:bg-white/15 text-white"
-              }`}
-            >
-              💡 {lang === "ar" ? "تلميح" : "Hint"}
-            </button>
-
-            <button
-              onClick={fetchMovies}
-              className="px-4 py-3 rounded-2xl font-bold text-sm transition bg-zinc-900/40 border border-white/10 hover:bg-zinc-800"
-            >
-              🔄 {lang === "ar" ? "تحديث الأفلام" : "Refresh Movies"}
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={resetToSelect}
-              className="px-4 py-3 rounded-2xl font-bold text-sm transition bg-zinc-900/40 border border-white/10 hover:bg-zinc-800"
-            >
-              🎯 {lang === "ar" ? "تغيير الفئة" : "Change Category"}
-            </button>
-          </div>
-        </div>
-
-        {/* ✅ Hint Text */}
-        <AnimatePresence>
-          {hintText && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 text-gray-200"
-            >
-              {hintText}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ✅ Image + Choices */}
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Image */}
-          <motion.div
-            animate={shake ? { x: [0, -10, 10, -7, 7, 0] } : {}}
-            transition={{ duration: 0.35 }}
-            className="lg:col-span-2"
-          >
-            <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-xl">
-              {imageUrl ? (
-                <>
-                  <img
-                    src={imageUrl}
-                    alt="Guess the movie"
-                    className={`w-full h-[260px] md:h-[380px] object-cover ${
-                      isPosterFallback ? "scale-125 blur-[2px]" : ""
-                    }`}
-                    style={{
-                      filter: `blur(${config.blur}px)`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10"></div>
-
-                  {/* Timer */}
-                  <div className="absolute top-0 left-0 w-full">
-                    <div className="h-2 bg-black/40">
-                      <motion.div
-                        className="h-2 bg-red-600"
-                        initial={{ width: "100%" }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.4, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 border border-white/10 px-4 py-2 rounded-2xl">
-                    <span className="text-sm font-extrabold">
-                      ⏳ {timeLeft}s
-                    </span>
-                  </div>
-
-                  {/* overlay message */}
-                  {locked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                      <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className={`px-8 py-6 rounded-3xl border shadow-2xl text-center ${
-                          result === "correct"
-                            ? "bg-green-600/20 border-green-500"
-                            : "bg-red-600/20 border-red-500"
-                        }`}
-                      >
-                        <h3 className="text-3xl font-extrabold">
-                          {result === "correct"
-                            ? lang === "ar"
-                              ? "✅ صحيح!"
-                              : "✅ Correct!"
-                            : lang === "ar"
-                            ? "❌ خطأ!"
-                            : "❌ Wrong!"}
-                        </h3>
-
-                        <p className="text-gray-200 mt-2 font-semibold">
-                          {lang === "ar" ? "الإجابة الصحيحة:" : "Correct answer:"}{" "}
-                          <span className="text-white">{current?.title}</span>
-                        </p>
-
-                        <button
-                          onClick={next}
-                          className="mt-5 px-6 py-3 rounded-2xl bg-white text-black font-extrabold hover:bg-gray-200 transition"
-                        >
-                          {lang === "ar" ? "التالي →" : "Next →"}
-                        </button>
-                      </motion.div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="h-[260px] md:h-[380px] flex items-center justify-center text-gray-400">
-                  {lang === "ar" ? "لا توجد صورة" : "No Image"}
-                </div>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Choices */}
-          <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-xl">
-            <h2 className="text-lg font-extrabold mb-4">
-              {lang === "ar" ? "اختر العنوان الصحيح" : "Choose The Correct Title"}
-            </h2>
-
-            {loading ? (
-              <p className="text-gray-400">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {choices.map((m) => {
-                  const isCorrect = locked && m.id === current.id;
-                  const isWrong = locked && selected === m.id && m.id !== current.id;
-
+              <div className="grid grid-cols-3 gap-4">
+                {Object.keys(DIFFICULTIES).map((d) => {
+                  const di = DIFFICULTIES[d];
+                  const active = difficulty === d;
                   return (
-                    <button
-                      key={m.id}
-                      onClick={() => pick(m)}
-                      disabled={locked}
-                      className={`px-4 py-4 rounded-2xl font-bold text-sm text-left border transition relative overflow-hidden ${
-                        isCorrect
-                          ? "bg-green-600/20 border-green-500 text-white"
-                          : isWrong
-                          ? "bg-red-600/20 border-red-500 text-white"
-                          : "bg-zinc-950/50 border-white/10 text-gray-200 hover:bg-zinc-800"
+                    <motion.button
+                      key={d}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setDifficulty(d)}
+                      className={`rounded-2xl border px-4 py-4 font-bold shadow-lg transition ${
+                        active
+                          ? "bg-red-600/90 border-red-500"
+                          : "bg-zinc-900/40 border-white/10 hover:bg-zinc-800"
                       }`}
                     >
-                      <span className="relative z-10">{m.title}</span>
-                      {isCorrect && <span className="absolute right-4 top-1/2 -translate-y-1/2">✅</span>}
-                      {isWrong && <span className="absolute right-4 top-1/2 -translate-y-1/2">❌</span>}
-                    </button>
+                      <div className="text-2xl">{di.emoji}</div>
+                      <div>{lang === "ar" ? di.labelAr : di.labelEn}</div>
+                      <div className="text-xs text-gray-300 mt-1">
+                        ⏱ {di.time}s · ⭐ {di.points} pts
+                      </div>
+                    </motion.button>
                   );
                 })}
               </div>
-            )}
+            </div>
 
-            <div className="mt-6 text-xs text-gray-400 leading-relaxed">
-              {lang === "ar"
-                ? "✅ نصيحة: اختر مستوى صعب لتحدي أكبر وزيادة النقاط!"
-                : "✅ Tip: Play Hard mode for bigger challenge & more points!"}
+            {/* Genres */}
+            <div>
+              <h2 className="text-xl font-bold mb-4">
+                {lang === "ar" ? "اختر فئة الأفلام" : "Choose Category"}
+              </h2>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {GENRES.map((g) => (
+                  <motion.button
+                    key={g.id}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => startQuiz(g)}
+                    className="rounded-3xl border border-white/10 bg-zinc-900/40 hover:bg-zinc-800 transition px-4 py-5 font-semibold shadow-xl relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 opacity-20 bg-gradient-to-tr from-red-600/40 via-transparent to-white/10" />
+                    <div className="relative">
+                      <div className="text-3xl mb-2">{g.emoji}</div>
+                      <div className="text-base font-bold">
+                        {lang === "ar" ? g.ar : g.en}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {lang === "ar" ? "10 أسئلة" : "10 questions"}
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {/* Best Score */}
+            <div className="text-center text-sm text-gray-400">
+              🏆 {lang === "ar" ? "أفضل نتيجة" : "Best Score"}:{" "}
+              <b className="text-white">{bestScore}</b>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ✅ LOADING */}
+        {step === "play" && loadingQ && (
+          <div className="mt-12 text-center text-gray-400">
+            {lang === "ar" ? "⏳ جاري تجهيز الأسئلة..." : "⏳ Preparing questions..."}
+          </div>
+        )}
+
+        {/* ✅ PLAY */}
+        {step === "play" && !loadingQ && currentQ && (
+          <div className="mt-10 space-y-6">
+            {/* Top bar */}
+            <div className="flex items-center justify-between text-sm text-gray-300">
+              <span>
+                {lang === "ar" ? "السؤال" : "Question"} {current + 1} /{" "}
+                {questions.length}
+              </span>
+
+              <span className="flex items-center gap-2">
+                🔥 <b className="text-white">{streak}</b>
+                <span className="text-gray-500">|</span>
+                ⭐ <b className="text-white">{score}</b>
+              </span>
+            </div>
+
+            {/* Progress */}
+            <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden border border-white/10">
+              <div
+                className="h-full bg-red-600 transition-all"
+                style={{ width: `${((current + 1) / questions.length) * 100}%` }}
+              />
+            </div>
+
+            {/* Image */}
+            <div className="rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/30 relative shadow-xl">
+              {!imageLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full h-[220px] md:h-[360px] bg-zinc-900/60 animate-pulse flex items-center justify-center text-gray-400">
+                    {lang === "ar" ? "📸 تحميل الصورة..." : "📸 Loading image..."}
+                  </div>
+                </div>
+              )}
+
+              <img
+                src={TMDB_IMG + currentQ.backdrop_path}
+                alt="quiz"
+                className={`w-full h-[220px] md:h-[360px] object-cover transition ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+              />
+
+              {/* Timer */}
+              <div className="absolute top-3 right-3 bg-black/60 px-4 py-2 rounded-2xl border border-white/10 text-sm font-bold">
+                ⏱ {time}s
+              </div>
+
+              {/* XP */}
+              <div className="absolute top-3 left-3 bg-black/60 px-4 py-2 rounded-2xl border border-white/10 text-sm font-bold">
+                ⚡ XP {xp}
+              </div>
+            </div>
+
+            {/* Power Ups */}
+            <div className="grid grid-cols-3 gap-3">
+              <PowerBtn
+                disabled={hintUsed || answerLocked}
+                onClick={useHint}
+                label={lang === "ar" ? "🧠 تلميح" : "🧠 Hint"}
+              />
+              <PowerBtn
+                disabled={extraTimeUsed || answerLocked}
+                onClick={useExtraTime}
+                label={lang === "ar" ? "⏱ +6 ثواني" : "⏱ +6 sec"}
+              />
+              <PowerBtn
+                disabled={removeTwoUsed || answerLocked}
+                onClick={useRemoveTwo}
+                label={lang === "ar" ? "❌ حذف خيارين" : "❌ Remove 2"}
+              />
+            </div>
+
+            {/* Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {options.map((opt) => {
+                const isCorrect = opt === currentQ.title;
+                const isRemoved = removedOptions.includes(opt);
+
+                if (isRemoved) return null;
+
+                const isChosen = selected === opt;
+                const hintSelected = selected === "hint" && isCorrect;
+
+                let style =
+                  "bg-zinc-900/40 text-gray-200 border-white/10 hover:bg-zinc-800";
+
+                if (answerLocked) {
+                  if (isCorrect) style = "bg-green-600/80 border-green-400";
+                  else if (isChosen) style = "bg-red-600/80 border-red-400";
+                  else style = "bg-zinc-900/30 border-white/10 text-gray-400";
+                }
+
+                if (hintSelected) {
+                  style =
+                    "bg-yellow-500/80 border-yellow-300 text-black shadow-xl shadow-yellow-500/20";
+                }
+
+                return (
+                  <motion.button
+                    key={opt}
+                    whileHover={!answerLocked ? { scale: 1.02 } : {}}
+                    whileTap={!answerLocked ? { scale: 0.98 } : {}}
+                    onClick={() => handleAnswer(opt)}
+                    disabled={answerLocked || !imageLoaded}
+                    className={`px-5 py-4 rounded-2xl border font-semibold transition shadow-lg ${style}`}
+                  >
+                    {opt}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-gray-500 text-center">
+              {lang === "ar"
+                ? "⛔ المؤقت لا يبدأ حتى تحمل الصورة بالكامل. واستعمل Power-ups للربح!"
+                : "⛔ Timer starts after the image loads. Use power-ups to win!"}
+            </p>
+          </div>
+        )}
+
+        {/* ✅ END */}
+        {step === "end" && (
+          <div className="mt-14 text-center space-y-5">
+            <h2 className="text-3xl font-extrabold">
+              {lang === "ar" ? "🏆 انتهت اللعبة!" : "🏆 Game Finished!"}
+            </h2>
+
+            <p className="text-gray-300">
+              {lang === "ar" ? "نتيجتك" : "Your Score"}:{" "}
+              <b className="text-white">{score}</b>
+            </p>
+
+            <p className="text-gray-500 text-sm">
+              {lang === "ar" ? "أفضل نتيجة" : "Best Score"}:{" "}
+              <b className="text-white">{bestScore}</b>
+            </p>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={restart}
+              className="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-xl"
+            >
+              {lang === "ar" ? "🔁 العب من جديد" : "🔁 Play Again"}
+            </motion.button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ✅ Stat component
-function Stat({ label, value }) {
+function PowerBtn({ label, onClick, disabled }) {
   return (
-    <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-3 text-center backdrop-blur-xl">
-      <p className="text-xs text-gray-400 font-semibold">{label}</p>
-      <p className="text-lg font-extrabold text-white">{value}</p>
-    </div>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`px-3 py-3 rounded-2xl border font-semibold transition shadow-lg text-sm ${
+        disabled
+          ? "bg-zinc-900/20 border-white/5 text-gray-500"
+          : "bg-zinc-900/40 border-white/10 hover:bg-zinc-800 text-white"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
