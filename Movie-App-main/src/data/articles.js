@@ -1057,6 +1057,159 @@ const articles = [
 `,
   },
 
+{
+  slug: "best-movies-2026",
+  title: "أفضل أفلام 2026 المنتظرة | Best Movies of 2026 You Shouldn’t Miss",
+  description:
+    "دليل شامل لأهم أفلام 2026 المنتظرة + ترشيحات حسب النوع السينمائي. / A complete guide to the most anticipated 2026 movies with genre-based picks.",
+  date: "2026-01-09",
+  content: `
+<h2>🇲🇦 مقدمة</h2>
+<p>سنة 2026 تُعتبر من أكثر السنوات المنتظرة لمحبي السينما. ليس فقط بسبب عودة سلاسل ضخمة، بل لأننا أمام موجة قوية من أفلام الخيال العلمي، الأكشن، والرعب النفسي.</p>
+
+<h2>🎬 لماذا 2026 سنة قوية؟</h2>
+<ul>
+<li><b>عودة سلاسل شهيرة:</b> أجزاء جديدة من أفلام عالمية ناجحة.</li>
+<li><b>تقنيات تصوير متطورة:</b> CGI أفضل، وتجارب IMAX أكبر.</li>
+<li><b>قصص أصيلة:</b> عودة الأفلام التي تعتمد على فكرة قوية وليس فقط “أكشن”.</li>
+</ul>
+
+<h2>🔥 أفضل أنواع الأفلام المنتظرة في 2026</h2>
+
+<h3>1) أفلام الخيال العلمي (Sci-Fi)</h3>
+<p>الخيال العلمي رجع بقوة بسبب نجاح الأعمال التي تمزج بين الفكرة العميقة والتجربة البصرية. سنة 2026 ستشهد مشاريع تعتمد على السفر عبر الزمن، الذكاء الاصطناعي، والفضاء.</p>
+
+<h3>2) أفلام الأكشن والمغامرات</h3>
+<p>الناس تحب الأكشن… لكن الأكشن الذي يحترم المشاهد! في 2026 نرى أعمال كبيرة بميزانيات ضخمة ومطاردات واقعية.</p>
+
+<h3>3) أفلام الرعب النفسي</h3>
+<p>الرعب لم يعد فقط “شبح يصرخ”… بل قصص نفسية تعتمد على التوتر والقلق. وهذا النوع تحبه الجماهير لأنه يترك أثر طويل.</p>
+
+<h2>✅ كيف تختار أفضل فيلم في 2026؟</h2>
+<ul>
+<li>تابع التريلر… لكن لا تحكم بسرعة.</li>
+<li>شاهد تقييم الجمهور بعد أسبوع من الإصدار.</li>
+<li>اقرأ Reviews بشرية (مثل الموجودة في CineReview 😉).</li>
+<li>اختر حسب مزاجك: أكشن؟ رعب؟ دراما؟</li>
+</ul>
+
+<h2>📌 نصيحة AdSense مهمة</h2>
+<p>إذا كنت تكتب على أفلام 2026 في موقعك، حاول دائمًا إضافة رأيك الشخصي وشرح لماذا الفيلم يستحق المشاهدة، بدل نسخ معلومات TMDB فقط.</p>
+
+<hr/>
+
+<h2>🇺🇸 Introduction</h2>
+<p>2026 is shaping up to be one of the most exciting years for movie fans. Not only because big franchises are coming back, but because we’re also seeing a strong wave of sci-fi, action, and psychological horror films.</p>
+
+<h2>🎬 Why 2026 Looks Huge</h2>
+<ul>
+<li><b>Major franchise returns:</b> New chapters of globally famous sagas.</li>
+<li><b>Better filmmaking tech:</b> Stronger CGI, bigger IMAX experiences.</li>
+<li><b>Original storytelling:</b> More movies built on strong ideas, not just action.</li>
+</ul>
+
+<h2>🔥 Most Anticipated Genres in 2026</h2>
+
+<h3>1) Sci-Fi Movies</h3>
+<p>Sci-fi is booming again thanks to movies that mix deep ideas with stunning visuals. 2026 will likely feature time travel, AI, and space exploration stories.</p>
+
+<h3>2) Action & Adventure</h3>
+<p>People love action — but action that respects the audience! Expect huge budgets, realistic stunts, and large-scale storytelling.</p>
+
+<h3>3) Psychological Horror</h3>
+<p>Horror is no longer just jump scares. Psychological horror dominates because it creates tension and stays in your mind longer.</p>
+
+<h2>✅ How To Pick The Best Movie in 2026</h2>
+<ul>
+<li>Watch the trailer — but don’t judge too fast.</li>
+<li>Check audience reviews after the first week.</li>
+<li>Read real human reviews (like CineReview 😉).</li>
+<li>Pick based on your mood: action, horror, drama, sci-fi.</li>
+</ul>
+
+<h2>📌 AdSense Tip</h2>
+<p>If you write about 2026 movies, always add your own opinion and value. Don’t rely only on TMDB copy — Google wants originality.</p>
+`,
+},
+
+{
+  slug: "best-movies-2025",
+  title: "أفضل أفلام 2025 التي تستحق المشاهدة | Best Movies of 2025 Worth Watching",
+  description:
+    "أفلام 2025 كانت مليئة بالمفاجآت — هنا أفضل الأعمال حسب الأنواع + نصائح اختيار. / 2025 was full of surprises — here are the best movies with genre picks.",
+  date: "2026-01-09",
+  content: `
+<h2>🇲🇦 مقدمة</h2>
+<p>سنة 2025 قدمت لنا أفلامًا متنوعة… منها ما فاجأ الجمهور بقصص قوية، ومنها ما خيّب التوقعات رغم الضجة الإعلامية.</p>
+
+<h2>🎬 لماذا 2025 كانت سنة مختلفة؟</h2>
+<ul>
+<li>ظهور موجة جديدة من أفلام الأكشن الواقعي.</li>
+<li>عودة أفلام الدراما القوية التي تعتمد على الأداء.</li>
+<li>تحسن كبير في أفلام الأنيميشن.</li>
+</ul>
+
+<h2>⭐ أفضل الأفلام حسب النوع</h2>
+
+<h3>1) أفضل أفلام الأكشن</h3>
+<p>في 2025 شاهدنا أعمالًا ركزت على القصة مع الأكشن، مما أعطى تجربة ممتعة ومتكاملة.</p>
+
+<h3>2) أفضل أفلام الدراما</h3>
+<p>بعض أفلام الدراما هذه السنة كانت قوية جدًا لأنها تعتمد على الحوار والتمثيل بشكل احترافي.</p>
+
+<h3>3) أفضل أفلام الخيال العلمي</h3>
+<p>الخيال العلمي في 2025 قدم أفكارًا عن مستقبل الإنسان، الذكاء الاصطناعي، وموضوعات فلسفية جميلة.</p>
+
+<h3>4) أفضل أفلام الأنيميشن</h3>
+<p>الأنيميشن لم يعد “للأطفال فقط”… الكثير من أفلام 2025 كانت عميقة وتحمل رسائل قوية.</p>
+
+<h2>✅ كيف تعرف إن الفيلم يستحق؟</h2>
+<ul>
+<li>لا تعتمد على التريلر فقط.</li>
+<li>تابع تقييم الجمهور وليس النقاد فقط.</li>
+<li>اقرأ مراجعات بشرية مستقلة.</li>
+</ul>
+
+<h2>📌 نصيحة SEO</h2>
+<p>إذا كتبت مقالة عن أفلام 2025، ركّز على: “لماذا الفيلم رائع؟ ماذا تعلمت منه؟ كيف كانت التجربة؟” لأن هذا محتوى أصلي.</p>
+
+<hr/>
+
+<h2>🇺🇸 Introduction</h2>
+<p>2025 delivered a wide variety of movies. Some surprised audiences with strong storytelling, while others disappointed despite big marketing hype.</p>
+
+<h2>🎬 Why 2025 Was Different</h2>
+<ul>
+<li>A new wave of realistic action movies.</li>
+<li>The return of strong drama driven by performance.</li>
+<li>Massive improvements in animated films.</li>
+</ul>
+
+<h2>⭐ Best Movies by Genre</h2>
+
+<h3>1) Best Action Movies</h3>
+<p>Action in 2025 felt more complete because storytelling mattered, not only explosions.</p>
+
+<h3>2) Best Drama Movies</h3>
+<p>Some drama films hit hard thanks to powerful acting and strong dialogue.</p>
+
+<h3>3) Best Sci-Fi Movies</h3>
+<p>Sci-fi brought themes about AI, humanity, and philosophical questions.</p>
+
+<h3>4) Best Animated Movies</h3>
+<p>Animation is no longer “just for kids” — many 2025 animated films were deep and meaningful.</p>
+
+<h2>✅ How To Know If It’s Worth It</h2>
+<ul>
+<li>Don’t trust trailers alone.</li>
+<li>Check audience ratings, not critics only.</li>
+<li>Read real independent reviews.</li>
+</ul>
+
+<h2>📌 SEO Tip</h2>
+<p>If you write about 2025 movies, focus on your personal experience and unique take — Google loves originality.</p>
+`,
+},
 
   // ✅ 10
   {
