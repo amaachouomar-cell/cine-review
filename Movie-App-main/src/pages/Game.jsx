@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
-const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
+const TMDB_IMG = "https://image.tmdb.org/t/p/w780";
 
 const DIFFICULTIES = {
   easy: { time: 20, points: 10, labelAr: "سهل", labelEn: "Easy", emoji: "🟢" },
@@ -26,7 +26,7 @@ function shuffle(arr) {
 }
 
 function winConfetti() {
-  confetti({ particleCount: 120, spread: 80, origin: { y: 0.65 } });
+  confetti({ particleCount: 140, spread: 90, origin: { y: 0.65 } });
 }
 
 export default function Quiz() {
@@ -42,7 +42,10 @@ export default function Quiz() {
 
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
+
   const [locked, setLocked] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [resultState, setResultState] = useState(null); // "correct" | "wrong"
 
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -51,7 +54,7 @@ export default function Quiz() {
   const timerRef = useRef(null);
 
   const [imgReady, setImgReady] = useState(false);
-  const [readyToPlay, setReadyToPlay] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const [loadingQ, setLoadingQ] = useState(false);
 
@@ -61,6 +64,8 @@ export default function Quiz() {
 
   const [hintInfo, setHintInfo] = useState(null);
   const [removedOptions, setRemovedOptions] = useState([]);
+
+  const [shake, setShake] = useState(false);
 
   async function fetchQuestions(genreId) {
     try {
@@ -91,14 +96,9 @@ export default function Quiz() {
     setScore(0);
     setStreak(0);
     setCurrent(0);
-    setSelected(null);
-    setLocked(false);
 
     setHintCount(3);
     setRemoveTwoCount(3);
-
-    setHintInfo(null);
-    setRemovedOptions([]);
 
     await fetchQuestions(selectedGenre.id);
   }
@@ -113,7 +113,13 @@ export default function Quiz() {
     setSelected(null);
 
     setImgReady(false);
-    setReadyToPlay(false);
+    setRevealed(false);
+
+    setShowResult(false);
+    setResultState(null);
+
+    setShake(false);
+
     setHintInfo(null);
     setRemovedOptions([]);
 
@@ -126,7 +132,7 @@ export default function Quiz() {
 
     setOptions(shuffle([correct, ...wrong]));
 
-    // ✅ Preload image
+    // ✅ preload image (but don't reveal it)
     const img = new Image();
     img.src = TMDB_IMG + currentQ.backdrop_path;
     img.onload = () => setImgReady(true);
@@ -136,7 +142,7 @@ export default function Quiz() {
   function startRound() {
     if (!imgReady) return;
 
-    setReadyToPlay(true);
+    setRevealed(true);
 
     timerRef.current = setInterval(() => {
       setTime((t) => {
@@ -153,27 +159,33 @@ export default function Quiz() {
   function timeout() {
     if (locked) return;
     setLocked(true);
+    setShowResult(true);
+    setResultState("wrong");
     setStreak(0);
-    setTimeout(nextQuestion, 900);
   }
 
   function handleAnswer(opt) {
     if (locked) return;
 
+    clearInterval(timerRef.current);
+
     setLocked(true);
     setSelected(opt);
+    setShowResult(true);
 
     const correct = opt === currentQ.title;
 
     if (correct) {
       winConfetti();
+      setResultState("correct");
       setScore((s) => s + DIFFICULTIES[difficulty].points + streak * 2);
       setStreak((st) => st + 1);
     } else {
+      setResultState("wrong");
       setStreak(0);
+      setShake(true);
+      setTimeout(() => setShake(false), 450);
     }
-
-    setTimeout(nextQuestion, 900);
   }
 
   function nextQuestion() {
@@ -187,7 +199,7 @@ export default function Quiz() {
 
   // ✅ Hint → only year + rating
   function useHint() {
-    if (hintCount <= 0 || locked || !readyToPlay) return;
+    if (hintCount <= 0 || locked || !revealed) return;
     setHintCount((c) => c - 1);
 
     const year = currentQ.release_date ? currentQ.release_date.split("-")[0] : "N/A";
@@ -198,7 +210,7 @@ export default function Quiz() {
 
   // ✅ Remove Two Options limited
   function useRemoveTwo() {
-    if (removeTwoCount <= 0 || locked || !readyToPlay) return;
+    if (removeTwoCount <= 0 || locked || !revealed) return;
     setRemoveTwoCount((c) => c - 1);
 
     const wrongs = options.filter((o) => o !== currentQ.title);
@@ -208,14 +220,15 @@ export default function Quiz() {
   return (
     <div className="min-h-screen px-4 pb-20 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
       <div className="max-w-5xl mx-auto pt-12">
+
         <h1 className="text-3xl md:text-5xl font-extrabold">
           🎬 {lang === "ar" ? "خمن الفيلم" : "Guess The Movie"}
         </h1>
 
         <p className="text-gray-400 mt-2">
           {lang === "ar"
-            ? "الصورة تُحمّل أولاً ثم تبدأ الجولة — تجربة سلسة واحترافية."
-            : "Image loads first, then the round starts — smooth & professional."}
+            ? "الصورة تكون مخفية حتى تضغط التالي — تجربة ألعاب حقيقية."
+            : "Image stays hidden until you press Next — real game experience."}
         </p>
 
         {/* PICK */}
@@ -277,6 +290,7 @@ export default function Quiz() {
         {/* PLAY */}
         {step === "play" && !loadingQ && currentQ && (
           <div className="mt-10 space-y-6">
+
             <div className="flex items-center justify-between text-sm text-gray-300">
               <span>
                 {lang === "ar" ? "سؤال" : "Question"} {current + 1}/{questions.length}
@@ -285,14 +299,30 @@ export default function Quiz() {
             </div>
 
             {/* IMAGE */}
-            <div className="rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/40 shadow-xl relative">
-              {!imgReady && (
-                <div className="h-[240px] md:h-[360px] flex items-center justify-center text-gray-400 animate-pulse">
-                  {lang === "ar" ? "📸 تحميل الصورة..." : "📸 Loading image..."}
+            <motion.div
+              animate={shake ? { x: [-6, 6, -4, 4, 0] } : {}}
+              transition={{ duration: 0.35 }}
+              className="rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/40 shadow-xl relative"
+            >
+              {/* Hidden cover until reveal */}
+              {!revealed && (
+                <div className="h-[240px] md:h-[360px] flex flex-col gap-3 items-center justify-center text-gray-400 bg-black/40">
+                  <p className="text-lg font-semibold">
+                    {lang === "ar" ? "🎬 جاهز؟ اضغط التالي" : "🎬 Ready? Press Next"}
+                  </p>
+
+                  <button
+                    onClick={startRound}
+                    disabled={!imgReady}
+                    className="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-xl disabled:opacity-40"
+                  >
+                    ➜ {lang === "ar" ? "التالي" : "Next"}
+                  </button>
                 </div>
               )}
 
-              {imgReady && (
+              {/* Actual image only after reveal */}
+              {revealed && (
                 <motion.img
                   initial={{ opacity: 0, scale: 1.03 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -304,24 +334,12 @@ export default function Quiz() {
               )}
 
               {/* TIMER */}
-              {readyToPlay && (
+              {revealed && (
                 <div className="absolute top-4 right-4 bg-black/60 px-4 py-2 rounded-2xl font-bold border border-white/10">
                   ⏱ {time}s
                 </div>
               )}
-
-              {/* READY BUTTON */}
-              {imgReady && !readyToPlay && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <button
-                    onClick={startRound}
-                    className="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-xl"
-                  >
-                    {lang === "ar" ? "التالي ➜" : "Next ➜"}
-                  </button>
-                </div>
-              )}
-            </div>
+            </motion.div>
 
             {/* HINT BOX */}
             {hintInfo && (
@@ -337,16 +355,16 @@ export default function Quiz() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={useHint}
-                disabled={hintCount <= 0 || locked || !readyToPlay}
-                className="px-3 py-3 rounded-2xl bg-zinc-900/40 border border-white/10 hover:bg-zinc-800 transition font-bold"
+                disabled={hintCount <= 0 || locked || !revealed}
+                className="px-3 py-3 rounded-2xl bg-zinc-900/40 border border-white/10 hover:bg-zinc-800 transition font-bold disabled:opacity-40"
               >
                 🧠 {lang === "ar" ? "تلميح" : "Hint"} ({hintCount})
               </button>
 
               <button
                 onClick={useRemoveTwo}
-                disabled={removeTwoCount <= 0 || locked || !readyToPlay}
-                className="px-3 py-3 rounded-2xl bg-zinc-900/40 border border-white/10 hover:bg-zinc-800 transition font-bold"
+                disabled={removeTwoCount <= 0 || locked || !revealed}
+                className="px-3 py-3 rounded-2xl bg-zinc-900/40 border border-white/10 hover:bg-zinc-800 transition font-bold disabled:opacity-40"
               >
                 ❌ {lang === "ar" ? "حذف خيارين" : "Remove 2"} ({removeTwoCount})
               </button>
@@ -374,7 +392,7 @@ export default function Quiz() {
                     whileHover={!locked ? { scale: 1.02 } : {}}
                     whileTap={!locked ? { scale: 0.98 } : {}}
                     onClick={() => handleAnswer(opt)}
-                    disabled={locked || !readyToPlay}
+                    disabled={locked || !revealed}
                     className={`px-5 py-4 rounded-2xl border font-semibold transition shadow-lg ${style}`}
                   >
                     {opt}
@@ -382,6 +400,33 @@ export default function Quiz() {
                 );
               })}
             </div>
+
+            {/* RESULT & NEXT BUTTON */}
+            {showResult && (
+              <div className="mt-4 p-5 rounded-3xl border border-white/10 bg-zinc-900/40 shadow-xl text-center space-y-4">
+                <h3 className="text-2xl font-extrabold">
+                  {resultState === "correct"
+                    ? lang === "ar"
+                      ? "✅ إجابة صحيحة!"
+                      : "✅ Correct!"
+                    : lang === "ar"
+                    ? "❌ إجابة خاطئة!"
+                    : "❌ Wrong!"}
+                </h3>
+
+                <p className="text-gray-300">
+                  {lang === "ar" ? "الجواب الصحيح هو:" : "Correct answer is:"}{" "}
+                  <b className="text-green-400">{currentQ.title}</b>
+                </p>
+
+                <button
+                  onClick={nextQuestion}
+                  className="px-10 py-4 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-xl"
+                >
+                  ➜ {lang === "ar" ? "التالي" : "Next"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
