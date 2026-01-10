@@ -1,95 +1,104 @@
 import { motion } from "framer-motion";
+import { NavLink } from "react-router-dom";
 import { useLang } from "../i18n/LanguageContext";
-import { Link } from "react-router-dom";
 
 export default function Games() {
   const { lang } = useLang();
-  const isAR = lang === "ar";
 
   const games = [
     {
-      slug: "cinequest",
-      title: isAR ? "🎬 خمن الفيلم" : "🎬 Guess The Movie",
-      difficulty: isAR ? "متوسط" : "Medium",
-      description: isAR
-        ? "شاهد بوستر الفيلم واختر الاسم الصحيح قبل انتهاء الوقت!"
-        : "Watch the poster and pick the correct movie title before time runs out!",
-      icon: "🎬",
-    },
-
-    {
       slug: "quiz",
-      title: isAR ? "🧠 اختبار الأفلام" : "🧠 Movie Quiz",
-      difficulty: isAR ? "سهل" : "Easy",
-      description: isAR
-        ? "أجب عن أسئلة ممتعة واختبر معلوماتك السينمائية!"
-        : "Answer fun questions and test your movie knowledge!",
+      title: lang === "ar" ? "اختبار الأفلام" : "Movie Quiz",
+      desc:
+        lang === "ar"
+          ? "اختبر ثقافتك السينمائية وتحدى وقتك!"
+          : "Test your movie knowledge with a fun quiz!",
+      level: lang === "ar" ? "سهل" : "Easy",
+      tag: lang === "ar" ? "لعبة سينمائية" : "Cinema Game",
       icon: "🧠",
+      playLink: "/quiz",
     },
-
+    {
+      slug: "guess-movie",
+      title: lang === "ar" ? "خمن الفيلم" : "Guess The Movie",
+      desc:
+        lang === "ar"
+          ? "خمن اسم الفيلم من البوستر قبل انتهاء الوقت!"
+          : "Guess the movie name from the poster before time runs out!",
+      level: lang === "ar" ? "متوسط" : "Medium",
+      tag: lang === "ar" ? "لعبة سينمائية" : "Cinema Game",
+      icon: "🎬",
+      playLink: "/guess-movie",
+    },
     {
       slug: "cine-match",
-      title: isAR ? "🎴 Cine Match" : "🎴 Cine Match",
-      difficulty: isAR ? "Premium" : "Premium",
-      description: isAR
-        ? "لعبة مطابقة بوسترات الأفلام — افتح بطاقتين واطابق نفس الفيلم!"
-        : "Movie Poster Matching — flip 2 cards and match the same movie!",
+      title: lang === "ar" ? "CineMatch (لعبة الذاكرة)" : "CineMatch (Memory Game)",
+      desc:
+        lang === "ar"
+          ? "اقلب البطاقات واصنع الأزواج قبل انتهاء الوقت!"
+          : "Flip cards and match pairs before time runs out!",
+      level: lang === "ar" ? "صعب" : "Hard",
+      tag: lang === "ar" ? "لعبة سينمائية" : "Cinema Game",
       icon: "🎴",
+      playLink: "/cine-match",
     },
   ];
 
   return (
-    <div className="min-h-screen px-4 pb-20 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
-      <div className="max-w-5xl mx-auto pt-12">
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          {isAR ? "🎮 الألعاب" : "🎮 Games"}
+    <div className="min-h-screen px-4 pb-20 text-white">
+      <div className="max-w-5xl mx-auto pt-10">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-3">
+          {lang === "ar" ? "🎮 قسم الألعاب" : "🎮 Games Section"}
         </h1>
-        <p className="text-gray-400 mt-3">
-          {isAR
-            ? "ألعاب سينمائية ممتعة داخل موقع CineReview 🎬"
-            : "Premium cinematic games inside CineReview 🎬"}
+        <p className="text-gray-300 mb-8">
+          {lang === "ar"
+            ? "اختر لعبة واستمتع بتحديات سينمائية ممتعة!"
+            : "Choose a game and enjoy fun cinema challenges!"}
         </p>
 
-        <div className="mt-10 grid gap-6">
-          {games.map((g) => (
+        <div className="grid gap-6">
+          {games.map((g, i) => (
             <motion.div
               key={g.slug}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="rounded-[32px] bg-zinc-900/40 border border-white/10 backdrop-blur-xl shadow-xl p-6 flex items-center justify-between gap-6 flex-wrap"
+              transition={{ delay: i * 0.08 }}
+              className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 p-6 md:p-8 shadow-2xl backdrop-blur-xl"
             >
-              {/* ✅ Left */}
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-red-600 flex items-center justify-center text-2xl shadow-lg">
-                  {g.icon}
-                </div>
-
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-extrabold">{g.title}</h2>
-                  <p className="text-gray-300 mt-1">{g.description}</p>
+                  <div className="text-xs inline-flex px-4 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 font-semibold mb-4">
+                    {g.tag}
+                  </div>
 
-                  <span className="inline-block mt-3 px-4 py-1 rounded-full text-xs font-bold bg-zinc-800/60 border border-white/10 text-gray-200">
-                    {g.difficulty}
-                  </span>
+                  <h2 className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
+                    <span className="text-3xl">{g.icon}</span> {g.title}
+                  </h2>
+
+                  <p className="text-gray-300 mt-2">{g.desc}</p>
+                  <p className="text-sm mt-2 text-gray-400">
+                    {lang === "ar" ? "الصعوبة:" : "Difficulty:"}{" "}
+                    <span className="text-white font-bold">{g.level}</span>
+                  </p>
                 </div>
-              </div>
 
-              {/* ✅ Right */}
-              <div className="flex items-center gap-3">
-                <Link
-                  to={`/games/${g.slug}`}
-                  className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-lg"
-                >
-                  {isAR ? "ابدأ الآن" : "Start Now"}
-                </Link>
+                <div className="flex gap-3">
+                  {/* ✅ Details */}
+                  <NavLink
+                    to={`/games/${g.slug}`}
+                    className="px-6 py-3 rounded-2xl bg-zinc-800/60 border border-white/10 hover:bg-zinc-700 transition font-bold"
+                  >
+                    {lang === "ar" ? "تفاصيل" : "Details"}
+                  </NavLink>
 
-                <Link
-                  to={`/games/${g.slug}`}
-                  className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold"
-                >
-                  {isAR ? "تفاصيل" : "Details"}
-                </Link>
+                  {/* ✅ Play */}
+                  <NavLink
+                    to={g.playLink}
+                    className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-lg"
+                  >
+                    {lang === "ar" ? "ابدأ الآن" : "Play Now"}
+                  </NavLink>
+                </div>
               </div>
             </motion.div>
           ))}

@@ -1,307 +1,446 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { NavLink } from "react-router-dom";
+import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
-const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
 
+// ✅ Difficulty levels (card pairs)
 const LEVELS = [
-  { id: "easy", ar: "سهل", en: "Easy", pairs: 6, time: 70 },
-  { id: "medium", ar: "متوسط", en: "Medium", pairs: 8, time: 85 },
-  { id: "hard", ar: "صعب", en: "Hard", pairs: 10, time: 95 },
-  { id: "expert", ar: "خبير", en: "Expert", pairs: 12, time: 115 },
+  { level: 1, pairs: 2, time: 35 }, // 4 cards
+  { level: 2, pairs: 3, time: 45 }, // 6 cards
+  { level: 3, pairs: 4, time: 55 }, // 8 cards
+  { level: 4, pairs: 5, time: 65 }, // 10 cards
+  { level: 5, pairs: 6, time: 75 }, // 12 cards
 ];
 
 export default function CineMatch() {
   const { lang } = useLang();
-  const isAR = lang === "ar";
 
-  const [stage, setStage] = useState("select"); // select | play | win | lose
-  const [level, setLevel] = useState(null);
+  const [movies, setMovies] = useState([]);
+  const [levelIndex, setLevelIndex] = useState(0);
 
   const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]); // indices
-  const [matched, setMatched] = useState(new Set());
-
+  const [flipped, setFlipped] = useState([]); // indexes
+  const [matched, setMatched] = useState([]); // ids
   const [moves, setMoves] = useState(0);
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
 
-  const [loading, setLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(LEVELS[levelIndex].time);
+  const [status, setStatus] = useState("loading"); // loading, ready, playing, win, lose
+  const [powerUsed, setPowerUsed] = useState(false);
+
+  const intervalRef = useRef(null);
+
+  const level = LEVELS[levelIndex];
+
+  // ✅ Fetch movies once
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setStatus("loading");
+        const res = await fetch(
+          `https://api.themoviedb.org/3/trending/movie/week?api_key=${
+            import.meta.env.VITE_TMDB_KEY
+          }`
+        );
+        const data = await res.json();
+
+        const list = (data.results || [])
+          .filter((m) => m.poster_path)
+          .slice(0, 30);
+
+        setMovies(list);
+        setStatus("ready");
+      } catch (err) {
+        console.error(err);
+        setStatus("ready");
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  // ✅ Build deck for current level
+  useEffect(() => {
+    if (!movies.length) return;
+
+    const selected = shuffle([...movies]).slice(0, level.pairs);
+    const deck = shuffle(
+      [...selected, ...selected].map((m, idx) => ({
+        uid: `${m.id}-${idx}-${Math.random()}`,
+        id: m.id,
+        title: m.title,
+        poster: m.poster_path,
+      }))
+    );
+
+    setCards(deck);
+    setFlipped([]);
+    setMatched([]);
+    setMoves(0);
+    setPowerUsed(false);
+    setTimeLeft(level.time);
+    setStatus("playing");
+  }, [movies, levelIndex]);
 
   // ✅ Timer
   useEffect(() => {
-    if (stage !== "play") return;
-    if (timeLeft <= 0) {
-      setStage("lose");
-      return;
+    if (status !== "playing") return;
+
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(intervalRef.current);
+          setStatus("lose");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [status]);
+
+  // ✅ Win detection
+  useEffect(() => {
+    if (!cards.length) return;
+
+    if (matched.length === level.pairs && status === "playing") {
+      setStatus("win");
+      clearInterval(intervalRef.current);
+
+      // 🎉 confetti
+      confetti({
+        particleCount: 160,
+        spread: 80,
+        origin: { y: 0.55 },
+      });
     }
-    const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    return () => clearInterval(t);
-  }, [stage, timeLeft]);
+  }, [matched, cards.length, status, level.pairs]);
 
-  // ✅ Load movies from TMDB and create cards
-  async function startGame(selectedLevel) {
-    setLevel(selectedLevel);
-    setStage("play");
-    setMoves(0);
-    setScore(0);
-    setMatched(new Set());
-    setFlipped([]);
-    setTimeLeft(selectedLevel.time);
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}`
-      );
-      const data = await res.json();
-
-      const posters = data.results
-        .filter((m) => m.poster_path)
-        .slice(0, selectedLevel.pairs);
-
-      // ✅ Create duplicated pairs
-      const deck = [...posters, ...posters]
-        .map((m, idx) => ({
-          id: `${m.id}-${idx}`,
-          movieId: m.id,
-          title: m.title,
-          poster: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
-        }))
-        .sort(() => Math.random() - 0.5);
-
-      setCards(deck);
-    } catch (err) {
-      console.error(err);
-    }
-
-    setLoading(false);
-  }
-
-  // ✅ Flip logic
-  function flipCard(index) {
-    if (flipped.length === 2) return;
+  // ✅ click logic
+  const handleFlip = (index) => {
+    if (status !== "playing") return;
     if (flipped.includes(index)) return;
-    if (matched.has(index)) return;
+    if (matched.includes(cards[index].id)) return;
+    if (flipped.length === 2) return;
 
-    setFlipped((prev) => [...prev, index]);
-  }
+    const newFlipped = [...flipped, index];
+    setFlipped(newFlipped);
 
-  // ✅ Compare two flipped cards
-  useEffect(() => {
-    if (flipped.length !== 2) return;
+    if (newFlipped.length === 2) {
+      setMoves((m) => m + 1);
+      const first = cards[newFlipped[0]];
+      const second = cards[newFlipped[1]];
 
-    const [a, b] = flipped;
-    setMoves((p) => p + 1);
+      if (first.id === second.id) {
+        // ✅ match
+        setMatched((prev) => [...prev, first.id]);
+        setTimeout(() => setFlipped([]), 550);
+      } else {
+        // ❌ mismatch
+        setTimeout(() => setFlipped([]), 900);
+      }
+    }
+  };
 
-    if (cards[a]?.movieId === cards[b]?.movieId) {
-      // ✅ Matched
-      setTimeout(() => {
-        setMatched((prev) => new Set([...prev, a, b]));
-        setFlipped([]);
-        setScore((s) => s + 120);
-      }, 400);
+  // ✅ Power: Reveal all for 1.2s (only once)
+  const usePower = () => {
+    if (powerUsed || status !== "playing") return;
+
+    setPowerUsed(true);
+    const allIndexes = cards.map((_, i) => i);
+
+    setFlipped(allIndexes);
+    setTimeout(() => setFlipped([]), 1200);
+  };
+
+  // ✅ Next Level
+  const nextLevel = () => {
+    if (levelIndex < LEVELS.length - 1) {
+      setLevelIndex((i) => i + 1);
     } else {
-      // ❌ Not matched
-      setTimeout(() => setFlipped([]), 850);
+      setLevelIndex(0);
     }
-  }, [flipped]);
+  };
 
-  // ✅ Win Check
-  useEffect(() => {
-    if (stage !== "play") return;
-    if (matched.size > 0 && matched.size === cards.length) {
-      setStage("win");
-    }
-  }, [matched, cards, stage]);
+  // ✅ Restart
+  const restart = () => {
+    setLevelIndex(0);
+  };
 
-  const ui = useMemo(() => {
-    return {
-      title: isAR ? "🎴 Cine Match" : "🎴 Cine Match",
-      desc: isAR
-        ? "لعبة مطابقة بوسترات الأفلام — افتح بطاقتين واطابق نفس الفيلم!"
-        : "Movie Poster Matching Game — flip 2 cards and match the same movie!",
-      choose: isAR ? "اختر مستوى" : "Choose Level",
-      start: isAR ? "ابدأ" : "Start",
-      moves: isAR ? "الحركات" : "Moves",
-      score: isAR ? "النقاط" : "Score",
-      time: isAR ? "الوقت" : "Time",
-      playAgain: isAR ? "العب من جديد" : "Play Again",
-      back: isAR ? "رجوع" : "Back",
-      win: isAR ? "🎉 ممتاز! فزت!" : "🎉 Amazing! You Win!",
-      lose: isAR ? "😢 انتهى الوقت!" : "😢 Time’s up!",
-    };
-  }, [isAR]);
+  const titleText =
+    lang === "ar"
+      ? "🎴 CineMatch — لعبة الذاكرة السينمائية"
+      : "🎴 CineMatch — Movie Memory Challenge";
+
+  const descText =
+    lang === "ar"
+      ? "اقلب البطاقات واصنع الأزواج قبل انتهاء الوقت! كل مستوى أصعب من السابق."
+      : "Flip cards and match pairs before time runs out. Each level gets harder!";
 
   return (
-    <div className="min-h-screen px-4 pb-20 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
-      <div className="max-w-6xl mx-auto pt-12">
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          {ui.title} <span className="text-red-500">Premium</span>
-        </h1>
-        <p className="text-gray-300 mt-3">{ui.desc}</p>
-
-        {/* ✅ SELECT LEVEL */}
-        {stage === "select" && (
-          <div className="mt-10">
-            <h2 className="text-lg font-bold mb-4">{ui.choose}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {LEVELS.map((l) => (
-                <motion.button
-                  key={l.id}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => startGame(l)}
-                  className="rounded-3xl bg-zinc-900/40 border border-white/10 px-6 py-6 text-left hover:bg-zinc-900/70 transition shadow-lg backdrop-blur-xl"
-                >
-                  <p className="text-xl font-extrabold">
-                    {isAR ? l.ar : l.en}
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {isAR ? "عدد الأزواج:" : "Pairs:"}{" "}
-                    <span className="text-white font-bold">{l.pairs}</span>
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {isAR ? "الوقت:" : "Time:"}{" "}
-                    <span className="text-white font-bold">{l.time}s</span>
-                  </p>
-                </motion.button>
-              ))}
-            </div>
+    <div className="min-h-screen px-4 pb-16 bg-gradient-to-b from-zinc-950 via-black to-black text-white">
+      <div className="max-w-5xl mx-auto pt-10">
+        {/* ✅ Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center justify-between gap-4 mb-8"
+        >
+          <div>
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
+              {titleText}
+            </h1>
+            <p className="text-gray-300 mt-2">{descText}</p>
           </div>
-        )}
 
-        {/* ✅ GAME */}
-        {stage === "play" && (
-          <div className="mt-10">
-            {/* Top Stats */}
-            <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
-              <Stat label={ui.score} value={score} />
-              <Stat label={ui.moves} value={moves} />
-              <Stat label={ui.time} value={`${timeLeft}s`} highlight />
-              <button
-                onClick={() => setStage("select")}
-                className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 hover:bg-zinc-800 transition text-sm font-semibold"
-              >
-                {ui.back}
-              </button>
-            </div>
+          <NavLink
+            to="/games"
+            className="px-4 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 hover:bg-zinc-800 transition font-semibold"
+          >
+            {lang === "ar" ? "⬅ العودة للألعاب" : "⬅ Back to Games"}
+          </NavLink>
+        </motion.div>
 
-            {loading ? (
-              <div className="p-10 rounded-3xl bg-zinc-900/40 border border-white/10 text-center text-gray-300">
-                {isAR ? "تحميل البطاقات..." : "Loading cards..."}
-              </div>
-            ) : (
-              <div
-                className={`grid gap-4 ${
-                  level?.pairs <= 6
-                    ? "grid-cols-3 sm:grid-cols-4"
-                    : "grid-cols-4 sm:grid-cols-5 md:grid-cols-6"
-                }`}
+        {/* ✅ HUD */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <HUDCard label={lang === "ar" ? "المستوى" : "Level"} value={`#${level.level}`} />
+          <HUDCard label={lang === "ar" ? "الوقت" : "Time"} value={`${timeLeft}s`} />
+          <HUDCard label={lang === "ar" ? "المحاولات" : "Moves"} value={moves} />
+          <HUDCard
+            label={lang === "ar" ? "الأزواج" : "Pairs"}
+            value={`${matched.length}/${level.pairs}`}
+          />
+        </div>
+
+        {/* ✅ Actions */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          <button
+            onClick={usePower}
+            disabled={powerUsed || status !== "playing"}
+            className={`px-5 py-3 rounded-2xl font-bold shadow-lg transition ${
+              powerUsed
+                ? "bg-zinc-800 text-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
+          >
+            {lang === "ar"
+              ? powerUsed
+                ? "✨ استخدمت المساعدة"
+                : "✨ كشف سريع (مرة واحدة)"
+              : powerUsed
+              ? "✨ Power Used"
+              : "✨ Quick Reveal (once)"}
+          </button>
+
+          <button
+            onClick={() => setLevelIndex((i) => i)}
+            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-semibold"
+          >
+            {lang === "ar" ? "🔄 إعادة نفس المستوى" : "🔄 Restart Level"}
+          </button>
+        </div>
+
+        {/* ✅ Board */}
+        <div className="rounded-[2.5rem] border border-white/10 bg-zinc-900/30 backdrop-blur-xl shadow-2xl p-5 md:p-8">
+          <AnimatePresence mode="wait">
+            {status === "loading" && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-20 text-gray-300"
               >
-                {cards.map((card, idx) => {
-                  const isOpen = flipped.includes(idx) || matched.has(idx);
-                  return (
-                    <Card
-                      key={card.id}
-                      card={card}
-                      open={isOpen}
-                      onClick={() => flipCard(idx)}
-                    />
-                  );
-                })}
-              </div>
+                {lang === "ar" ? "⏳ جاري تحميل اللعبة..." : "⏳ Loading game..."}
+              </motion.div>
             )}
-          </div>
-        )}
 
-        {/* ✅ WIN / LOSE */}
-        <AnimatePresence>
-          {(stage === "win" || stage === "lose") && (
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 25 }}
-              transition={{ duration: 0.35 }}
-              className="mt-12 rounded-3xl bg-zinc-900/40 border border-white/10 backdrop-blur-xl p-8 text-center shadow-2xl"
-            >
-              <h2 className="text-3xl font-extrabold">
-                {stage === "win" ? ui.win : ui.lose}
-              </h2>
-              <p className="text-gray-300 mt-3">
-                {ui.score}: <span className="text-white font-bold">{score}</span>{" "}
-                | {ui.moves}:{" "}
-                <span className="text-white font-bold">{moves}</span>
-              </p>
+            {(status === "playing" || status === "win" || status === "lose") && (
+              <motion.div
+                key="board"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+              >
+                <div
+                  className={`grid gap-4 ${
+                    level.pairs <= 3
+                      ? "grid-cols-3 md:grid-cols-4"
+                      : "grid-cols-4 md:grid-cols-6"
+                  }`}
+                >
+                  {cards.map((card, idx) => (
+                    <PremiumCard
+                      key={card.uid}
+                      card={card}
+                      flipped={flipped.includes(idx) || matched.includes(card.id)}
+                      matched={matched.includes(card.id)}
+                      onClick={() => handleFlip(idx)}
+                    />
+                  ))}
+                </div>
 
-              <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => startGame(level)}
-                  className="px-7 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-lg"
-                >
-                  {ui.playAgain}
-                </button>
-                <button
-                  onClick={() => setStage("select")}
-                  className="px-7 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold"
-                >
-                  {ui.back}
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {/* ✅ Result Overlay */}
+                <AnimatePresence>
+                  {status === "win" && (
+                    <ResultOverlay
+                      title={lang === "ar" ? "🎉 ممتاز! فزت بالمستوى!" : "🎉 Great! Level Completed!"}
+                      subtitle={
+                        lang === "ar"
+                          ? `المحاولات: ${moves} — الوقت المتبقي: ${timeLeft}s`
+                          : `Moves: ${moves} — Time left: ${timeLeft}s`
+                      }
+                      primaryBtn={lang === "ar" ? "➡️ المستوى التالي" : "➡️ Next Level"}
+                      onPrimary={nextLevel}
+                      secondaryBtn={lang === "ar" ? "🔁 إعادة من البداية" : "🔁 Restart All"}
+                      onSecondary={restart}
+                    />
+                  )}
+
+                  {status === "lose" && (
+                    <ResultOverlay
+                      title={lang === "ar" ? "⏰ انتهى الوقت!" : "⏰ Time's up!"}
+                      subtitle={
+                        lang === "ar"
+                          ? "لا بأس… حاول مرة أخرى وستنجح!"
+                          : "No worries — try again and win!"
+                      }
+                      primaryBtn={lang === "ar" ? "🔁 أعد المحاولة" : "🔁 Try Again"}
+                      onPrimary={() => setLevelIndex((i) => i)}
+                      secondaryBtn={lang === "ar" ? "⬅ العودة للألعاب" : "⬅ Back to Games"}
+                      onSecondary={() => (window.location.href = "/games")}
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
 }
 
-function Stat({ label, value, highlight }) {
+/* ---------------- Components ---------------- */
+
+function HUDCard({ label, value }) {
   return (
-    <div
-      className={`px-5 py-3 rounded-2xl border border-white/10 backdrop-blur-xl shadow-lg ${
-        highlight ? "bg-red-600/20" : "bg-zinc-900/40"
-      }`}
-    >
-      <p className="text-xs text-gray-300">{label}</p>
-      <p className="text-lg font-extrabold">{value}</p>
+    <div className="rounded-3xl bg-zinc-900/40 border border-white/10 px-4 py-4 backdrop-blur-xl shadow-lg">
+      <p className="text-xs text-gray-400 font-semibold">{label}</p>
+      <p className="text-lg md:text-xl font-extrabold mt-1">{value}</p>
     </div>
   );
 }
 
-function Card({ card, open, onClick }) {
+function PremiumCard({ card, flipped, matched, onClick }) {
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="aspect-[2/3] rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/40 shadow-xl relative"
+      whileTap={{ scale: 0.96 }}
+      className="relative aspect-[2/3] w-full rounded-3xl focus:outline-none"
+      style={{ perspective: 1000 }}
     >
-      <AnimatePresence mode="wait">
-        {open ? (
-          <motion.img
-            key="img"
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            src={card.poster}
+      <motion.div
+        animate={{ rotateY: flipped ? 180 : 0 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+        className="relative w-full h-full rounded-3xl"
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* FRONT */}
+        <div
+          className="absolute inset-0 rounded-3xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center shadow-xl overflow-hidden"
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          <div className="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_60%)]" />
+          <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_bottom,rgba(255,0,80,0.10),transparent_60%)]" />
+          <span className="text-3xl">🎬</span>
+          <div className="absolute bottom-3 left-3 right-3 h-8 rounded-2xl bg-white/5 border border-white/10" />
+        </div>
+
+        {/* BACK */}
+        <div
+          className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
+          style={{
+            transform: "rotateY(180deg)",
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img
+            src={`${TMDB_IMG}${card.poster}`}
             alt={card.title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${
+              matched ? "brightness-110" : "brightness-95"
+            }`}
             loading="lazy"
           />
-        ) : (
+          {/* Premium overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <div className="absolute inset-0 border border-white/10 rounded-3xl" />
+
+          {/* Shine effect */}
           <motion.div
-            key="back"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900"
-          >
-            <div className="w-10 h-10 rounded-full bg-red-600/30 border border-red-500/30 shadow-lg" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+            initial={{ x: "-120%" }}
+            animate={{ x: flipped ? "120%" : "-120%" }}
+            transition={{ duration: 0.9 }}
+            className="absolute top-0 left-0 h-full w-1/2 bg-white/10 blur-xl rotate-12"
+          />
+        </div>
+      </motion.div>
+
+      {matched && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute -top-2 -right-2 bg-emerald-500 text-black font-extrabold text-xs px-3 py-1 rounded-full shadow-lg"
+        >
+          ✓ MATCH
+        </motion.div>
+      )}
     </motion.button>
   );
+}
+
+function ResultOverlay({ title, subtitle, primaryBtn, secondaryBtn, onPrimary, onSecondary }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 14 }}
+      className="mt-10 rounded-[2rem] bg-zinc-950/90 border border-white/10 p-7 text-center shadow-2xl backdrop-blur-xl"
+    >
+      <h2 className="text-2xl md:text-3xl font-extrabold">{title}</h2>
+      <p className="text-gray-300 mt-2">{subtitle}</p>
+
+      <div className="mt-6 flex flex-col md:flex-row gap-3 justify-center">
+        <button
+          onClick={onPrimary}
+          className="px-7 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-lg"
+        >
+          {primaryBtn}
+        </button>
+
+        <button
+          onClick={onSecondary}
+          className="px-7 py-3 rounded-2xl bg-zinc-900/70 border border-white/10 hover:bg-zinc-800 transition font-bold"
+        >
+          {secondaryBtn}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---------------- Utils ---------------- */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }

@@ -14,18 +14,21 @@ import Reviews from "./pages/Reviews";
 import Blog from "./pages/blog/Blog";
 import BlogPost from "./pages/blog/BlogPost";
 
-import Games from "./pages/Games";
-import GameDetails from "./pages/GameDetails";
-
-import Quiz from "./pages/Quiz";
-
-import FAQ from "./pages/FAQ";
-import Guidelines from "./pages/Guidelines";
-
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+
+import FAQ from "./pages/FAQ";
+import Guidelines from "./pages/Guidelines";
+
+import Games from "./pages/Games";
+import GameDetails from "./pages/GameDetails";
+
+// ✅ Games Pages (important!)
+import Quiz from "./pages/Quiz";
+import Game from "./pages/Game"; // Guess Movie
+import CineMatch from "./pages/CineMatch";
 
 import NotFound from "./pages/NotFound";
 
@@ -35,7 +38,6 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {/* ✅ Spacer for navbar (smooth) */}
       <motion.div
         initial={false}
         animate={{ height: isDetailsPage ? 0 : 86 }}
@@ -55,25 +57,27 @@ function AnimatedRoutes() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* ✅ Games */}
+          {/* ✅ Games Section */}
           <Route path="/games" element={<Games />} />
           <Route path="/games/:slug" element={<GameDetails />} />
 
-          {/* ✅ Extra Pages */}
+          {/* ✅ Direct Game Routes (so no 404) */}
           <Route path="/quiz" element={<Quiz />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/guess-movie" element={<Game />} />
+          <Route path="/cine-match" element={<CineMatch />} />
 
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/guidelines" element={<Guidelines />} />
 
           {/* ✅ Movie Details */}
           <Route path="/movie/:id" element={<MovieDetails />} />
 
-          {/* ✅ Not Found */}
+          {/* ✅ NotFound */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
