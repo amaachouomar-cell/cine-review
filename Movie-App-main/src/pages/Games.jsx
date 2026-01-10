@@ -27,6 +27,19 @@ const gamesList = [
     color: "bg-indigo-600",
   },
 
+  {
+  slug: "cine-match",
+  title: "🎴 Cine Match",
+  description:
+    "لعبة مطابقة بوسترات الأفلام — افتح بطاقتين واطابق نفس الفيلم. (Premium)",
+  descriptionEn:
+    "Movie Poster Matching — flip 2 cards and match the same movie. (Premium)",
+  image:
+    "https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=900&q=60",
+  route: "/games/cine-match",
+  difficulty: "Premium",
+}
+
 ];
 
 export default function Games() {

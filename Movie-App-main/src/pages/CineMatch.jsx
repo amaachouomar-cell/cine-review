@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "../i18n/LanguageContext";
+import { Link } from "react-router-dom";
 
 const TMDB_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -15,11 +16,11 @@ export default function CineMatch() {
   const { lang } = useLang();
   const isAR = lang === "ar";
 
-  const [stage, setStage] = useState("select"); // select | play | win | lose
+  const [view, setView] = useState("intro"); // intro | select | play | win | lose
   const [level, setLevel] = useState(null);
 
   const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]); // indices
+  const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState(new Set());
 
   const [moves, setMoves] = useState(0);
@@ -30,25 +31,24 @@ export default function CineMatch() {
 
   // ✅ Timer
   useEffect(() => {
-    if (stage !== "play") return;
+    if (view !== "play") return;
     if (timeLeft <= 0) {
-      setStage("lose");
+      setView("lose");
       return;
     }
     const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
     return () => clearInterval(t);
-  }, [stage, timeLeft]);
+  }, [view, timeLeft]);
 
-  // ✅ Load movies from TMDB and create cards
+  // ✅ Start game with level
   async function startGame(selectedLevel) {
     setLevel(selectedLevel);
-    setStage("play");
+    setView("play");
     setMoves(0);
     setScore(0);
     setMatched(new Set());
     setFlipped([]);
     setTimeLeft(selectedLevel.time);
-
     setLoading(true);
 
     try {
@@ -61,7 +61,6 @@ export default function CineMatch() {
         .filter((m) => m.poster_path)
         .slice(0, selectedLevel.pairs);
 
-      // ✅ Create duplicated pairs
       const deck = [...posters, ...posters]
         .map((m, idx) => ({
           id: `${m.id}-${idx}`,
@@ -84,11 +83,10 @@ export default function CineMatch() {
     if (flipped.length === 2) return;
     if (flipped.includes(index)) return;
     if (matched.has(index)) return;
-
     setFlipped((prev) => [...prev, index]);
   }
 
-  // ✅ Compare two flipped cards
+  // ✅ Compare cards
   useEffect(() => {
     if (flipped.length !== 2) return;
 
@@ -96,25 +94,23 @@ export default function CineMatch() {
     setMoves((p) => p + 1);
 
     if (cards[a]?.movieId === cards[b]?.movieId) {
-      // ✅ Matched
       setTimeout(() => {
         setMatched((prev) => new Set([...prev, a, b]));
         setFlipped([]);
         setScore((s) => s + 120);
       }, 400);
     } else {
-      // ❌ Not matched
       setTimeout(() => setFlipped([]), 850);
     }
   }, [flipped]);
 
-  // ✅ Win Check
+  // ✅ Win check
   useEffect(() => {
-    if (stage !== "play") return;
+    if (view !== "play") return;
     if (matched.size > 0 && matched.size === cards.length) {
-      setStage("win");
+      setView("win");
     }
-  }, [matched, cards, stage]);
+  }, [matched, cards, view]);
 
   const ui = useMemo(() => {
     return {
@@ -122,8 +118,11 @@ export default function CineMatch() {
       desc: isAR
         ? "لعبة مطابقة بوسترات الأفلام — افتح بطاقتين واطابق نفس الفيلم!"
         : "Movie Poster Matching Game — flip 2 cards and match the same movie!",
+      goal: isAR
+        ? "✅ الهدف: افتح بطاقتين ثم حاول مطابقة نفس الفيلم بأقل عدد من الحركات قبل انتهاء الوقت."
+        : "✅ Goal: Flip 2 cards and match the same movie with fewer moves before time runs out.",
       choose: isAR ? "اختر مستوى" : "Choose Level",
-      start: isAR ? "ابدأ" : "Start",
+      start: isAR ? "ابدأ اللعبة" : "Start Game",
       moves: isAR ? "الحركات" : "Moves",
       score: isAR ? "النقاط" : "Score",
       time: isAR ? "الوقت" : "Time",
@@ -131,19 +130,59 @@ export default function CineMatch() {
       back: isAR ? "رجوع" : "Back",
       win: isAR ? "🎉 ممتاز! فزت!" : "🎉 Amazing! You Win!",
       lose: isAR ? "😢 انتهى الوقت!" : "😢 Time’s up!",
+      loading: isAR ? "تحميل البطاقات..." : "Loading cards...",
+      hint: isAR
+        ? "💡 نصيحة: ركّز على أماكن البطاقات — مع الوقت ستصبح أسرع!"
+        : "💡 Tip: Focus on card locations — you’ll get faster over time!",
     };
   }, [isAR]);
 
   return (
     <div className="min-h-screen px-4 pb-20 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
       <div className="max-w-6xl mx-auto pt-12">
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-          {ui.title} <span className="text-red-500">Premium</span>
-        </h1>
-        <p className="text-gray-300 mt-3">{ui.desc}</p>
+        {/* ✅ Header */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+              {ui.title} <span className="text-red-500">Premium</span>
+            </h1>
+            <p className="text-gray-300 mt-3">{ui.desc}</p>
+          </div>
 
-        {/* ✅ SELECT LEVEL */}
-        {stage === "select" && (
+          <Link
+            to="/games"
+            className="px-6 py-3 rounded-2xl bg-zinc-900/50 border border-white/10 hover:bg-zinc-800 transition font-semibold"
+          >
+            ← {ui.back}
+          </Link>
+        </div>
+
+        {/* ✅ INTRO */}
+        {view === "intro" && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="mt-10 rounded-3xl bg-zinc-900/40 border border-white/10 backdrop-blur-xl p-8 shadow-xl"
+          >
+            <h2 className="text-2xl font-extrabold mb-3">
+              {isAR ? "🎮 كيفية اللعب" : "🎮 How to Play"}
+            </h2>
+            <p className="text-gray-300 leading-relaxed">{ui.goal}</p>
+
+            <p className="text-gray-400 mt-4">{ui.hint}</p>
+
+            <button
+              onClick={() => setView("select")}
+              className="mt-8 px-8 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-bold shadow-lg"
+            >
+              {ui.start}
+            </button>
+          </motion.div>
+        )}
+
+        {/* ✅ LEVEL SELECT */}
+        {view === "select" && (
           <div className="mt-10">
             <h2 className="text-lg font-bold mb-4">{ui.choose}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -173,15 +212,14 @@ export default function CineMatch() {
         )}
 
         {/* ✅ GAME */}
-        {stage === "play" && (
+        {view === "play" && (
           <div className="mt-10">
-            {/* Top Stats */}
             <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
               <Stat label={ui.score} value={score} />
               <Stat label={ui.moves} value={moves} />
               <Stat label={ui.time} value={`${timeLeft}s`} highlight />
               <button
-                onClick={() => setStage("select")}
+                onClick={() => setView("select")}
                 className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 hover:bg-zinc-800 transition text-sm font-semibold"
               >
                 {ui.back}
@@ -190,7 +228,7 @@ export default function CineMatch() {
 
             {loading ? (
               <div className="p-10 rounded-3xl bg-zinc-900/40 border border-white/10 text-center text-gray-300">
-                {isAR ? "تحميل البطاقات..." : "Loading cards..."}
+                {ui.loading}
               </div>
             ) : (
               <div
@@ -218,7 +256,7 @@ export default function CineMatch() {
 
         {/* ✅ WIN / LOSE */}
         <AnimatePresence>
-          {(stage === "win" || stage === "lose") && (
+          {(view === "win" || view === "lose") && (
             <motion.div
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
@@ -227,7 +265,7 @@ export default function CineMatch() {
               className="mt-12 rounded-3xl bg-zinc-900/40 border border-white/10 backdrop-blur-xl p-8 text-center shadow-2xl"
             >
               <h2 className="text-3xl font-extrabold">
-                {stage === "win" ? ui.win : ui.lose}
+                {view === "win" ? ui.win : ui.lose}
               </h2>
               <p className="text-gray-300 mt-3">
                 {ui.score}: <span className="text-white font-bold">{score}</span>{" "}
@@ -243,7 +281,7 @@ export default function CineMatch() {
                   {ui.playAgain}
                 </button>
                 <button
-                  onClick={() => setStage("select")}
+                  onClick={() => setView("select")}
                   className="px-7 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold"
                 >
                   {ui.back}
@@ -298,7 +336,7 @@ function Card({ card, open, onClick }) {
             exit={{ opacity: 0 }}
             className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900"
           >
-            <div className="w-10 h-10 rounded-full bg-red-600/30 border border-red-500/30 shadow-lg" />
+            <div className="w-12 h-12 rounded-full bg-red-600/25 border border-red-500/25 shadow-lg" />
           </motion.div>
         )}
       </AnimatePresence>

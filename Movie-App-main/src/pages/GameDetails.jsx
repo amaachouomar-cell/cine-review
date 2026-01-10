@@ -1,6 +1,7 @@
 import { useParams, NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "../i18n/LanguageContext";
+import CineMatch from "./CineMatch";
 
 const gamesList = {
   
