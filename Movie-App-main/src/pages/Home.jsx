@@ -60,17 +60,20 @@ export default function Home() {
   }, [query]);
 
   // ✅ Fetch genres once
-  useEffect(() => {
-    async function fetchGenres() {
-      try {
-        const genresData = await getGenres();
-        setGenres(genresData);
-      } catch (error) {
-        console.error("Error fetching genres:", error);
-      }
+ useEffect(() => {
+  const fetchGenres = async () => {
+    try {
+      const data = await getGenres();
+      setGenres(data?.genres || []);
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+      setGenres([]); // ✅ يمنع crash
     }
-    fetchGenres();
-  }, []);
+  };
+
+  fetchGenres();
+}, []);
+
 
   // ✅ Fetch movies
   useEffect(() => {

@@ -1,42 +1,67 @@
-const BASE_URL = "https://api.themoviedb.org/3";
-const API_KEY = import.meta.env.VITE_TMDB_KEY;
+// src/api/tmdb.js
 
+const API_BASE = "https://api.themoviedb.org/3";
+
+const TMDB_KEY =
+  import.meta.env.VITE_TMDB_API_KEY ||
+  import.meta.env.VITE_TMDB_KEY ||
+  "";
+
+// ✅ صور TMDB
+export const getImageUrl = (path, size = "w780") =>
+  path ? `https://image.tmdb.org/t/p/${size}${path}` : "";
+
+// ✅ Fetch الرئيسي
 async function fetchTMDB(endpoint) {
-  const url = `${BASE_URL}${endpoint}${
+  if (!TMDB_KEY) {
+    console.error("❌ TMDB API KEY is missing. Check .env / Vercel env.");
+    throw new Error("TMDB API KEY is missing. Please add it in .env / Vercel.");
+  }
+
+  const url = `${API_BASE}${endpoint}${
     endpoint.includes("?") ? "&" : "?"
-  }api_key=${API_KEY}`;
+  }api_key=${TMDB_KEY}&language=en-US`;
 
   const res = await fetch(url);
 
   if (!res.ok) {
-    throw new Error("TMDB request failed");
+    const msg = `TMDB Error: ${res.status} ${res.statusText}`;
+    console.error(msg);
+    throw new Error(msg);
   }
 
   return res.json();
 }
 
-// ✅ Trending Movies
-export const getTrendingMovies = () => fetchTMDB("/trending/movie/week");
+/* ✅ Home Page */
+export const getTrendingMovies = () =>
+  fetchTMDB("/trending/movie/week");
 
-// ✅ Popular Movies
-export const getPopularMovies = (page = 1) =>
-  fetchTMDB(`/movie/popular?page=${page}`);
+export const getPopularMovies = () =>
+  fetchTMDB("/movie/popular");
 
-// ✅ Top Rated Movies
-export const getTopRatedMovies = (page = 1) =>
-  fetchTMDB(`/movie/top_rated?page=${page}`);
+export const getTopRatedMovies = () =>
+  fetchTMDB("/movie/top_rated");
 
-// ✅ Movie Details
-export const getMovieDetails = (id) =>
-  fetchTMDB(`/movie/${id}?append_to_response=videos,credits`);
+export const getGenres = () =>
+  fetchTMDB("/genre/movie/list");
 
-// ✅ Search Movies
+export const getMoviesByGenre = (genreId) =>
+  fetchTMDB(`/discover/movie?with_genres=${genreId}&sort_by=popularity.desc`);
+
 export const searchMovies = (query) =>
   fetchTMDB(`/search/movie?query=${encodeURIComponent(query)}`);
 
-// ✅ Genres
-export const getGenres = () => fetchTMDB("/genre/movie/list");
+/* ✅ Movie Details Page */
+export const getMovieDetails = (id) =>
+  fetchTMDB(`/movie/${id}`);
 
-// ✅ Movies by Genre
-export const getMoviesByGenre = (genreId, page = 1) =>
-  fetchTMDB(`/discover/movie?with_genres=${genreId}&page=${page}`);
+export const getMovieCredits = (id) =>
+  fetchTMDB(`/movie/${id}/credits`);
+
+export const getSimilarMovies = (id) =>
+  fetchTMDB(`/movie/${id}/similar`);
+
+// ✅ ✅ ✅ THIS IS WHAT WAS MISSING
+export const getMovieVideos = (id) =>
+  fetchTMDB(`/movie/${id}/videos`);
