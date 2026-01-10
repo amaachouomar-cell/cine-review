@@ -9,7 +9,6 @@ export default function GameDetails() {
   const { slug } = useParams();
 
   if (slug === "quiz") return <Quiz />;
-  if (slug === "cinequest") return <CineQuest />;
   if (slug === "cine-match") return <CineMatch />;
 
   return <NotFound />;
