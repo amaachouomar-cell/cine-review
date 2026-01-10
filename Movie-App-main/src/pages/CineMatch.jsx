@@ -1,34 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
-const TMDB_IMG = "https://image.tmdb.org/t/p/w300";
+const TMDB = "https://image.tmdb.org/t/p/w342";
+
+// ✅ Poster paths (مضمونة + fallback)
+const POSTERS = [
+  "/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg", // Inception
+  "/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", // Fight Club
+  "/qJ2tW6WMUDux911r6m7haRef0WH.jpg", // Dark Knight
+  "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", // Interstellar
+  "/iQFcwSGbZXMkeyKrxbPnwnRo5fl.jpg", // Joker
+  "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // Godfather
+  "/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", // Parasite
+  "/or06FN3Dka5tukK1e9sl16pB3iy.jpg", // Avengers
+  "/9O7gLzmreU0nGkIB6K3BsJbzvNv.jpg", // Matrix
+  "/hziiv14OpD73u9gAak4XDDfBKa2.jpg", // Shawshank
+];
+
+// ✅ Placeholder guaranteed (local)
+const PLACEHOLDER =
+  "https://via.placeholder.com/342x513/111827/ffffff?text=CineReview";
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+// ✅ preload images before gameplay
+async function preloadImages(paths) {
+  const promises = paths.map(
+    (p) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.src = TMDB + p;
+        img.onload = resolve;
+        img.onerror = resolve;
+      })
+  );
+  await Promise.all(promises);
+}
+
 export default function CineMatch() {
   const { lang } = useLang();
 
-  // ✅ Posters list (static so no API issues)
-  const posters = useMemo(() => [
-    "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", // Inception
-    "/9O1Iy9od7I4x7zVgF8RjzjF7QzI.jpg", // Joker
-    "/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg", // Interstellar
-    "/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", // Fight Club
-    "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // The Dark Knight
-    "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // Godfather
-    "/kAVRgw7GgK1CfYEJq8ME6EvRIgU.jpg", // Parasite
-    "/r7XifzvtezNt31ypvsmb6Oqxw49.jpg", // Avengers
-  ], []);
-
-  // ✅ Levels
-  const levels = useMemo(() => [
-    { pairs: 4, time: 45 },
-    { pairs: 6, time: 60 },
-    { pairs: 8, time: 75 },
-  ], []);
+  const levels = useMemo(
+    () => [
+      { pairs: 4, time: 45 },
+      { pairs: 6, time: 60 },
+      { pairs: 8, time: 75 },
+    ],
+    []
+  );
 
   const [level, setLevel] = useState(0);
   const [cards, setCards] = useState([]);
@@ -36,93 +59,91 @@ export default function CineMatch() {
   const [matched, setMatched] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [timeLeft, setTimeLeft] = useState(levels[level].time);
-  const [gameState, setGameState] = useState("loading"); 
-  // loading | playing | win | lose
+  const [state, setState] = useState("loading"); // loading | playing | win | lose
 
-  // ✅ create board
-  function buildBoard(lvl) {
-    const { pairs } = levels[lvl];
-    const selected = posters.slice(0, pairs);
-    const duplicated = shuffle([...selected, ...selected]).map((img, idx) => ({
-      id: idx + "-" + img,
+  // ✅ Build board
+  async function buildBoard(lvl) {
+    setState("loading");
+
+    const { pairs, time } = levels[lvl];
+    const selected = POSTERS.slice(0, pairs);
+
+    // ✅ preload posters for the level to avoid black cards
+    await preloadImages(selected);
+
+    const board = shuffle([...selected, ...selected]).map((img, index) => ({
+      key: index + "-" + img,
       img,
+      loaded: false,
     }));
-    setCards(duplicated);
+
+    setCards(board);
     setFlipped([]);
     setMatched(new Set());
     setBusy(false);
-    setTimeLeft(levels[lvl].time);
-    setGameState("playing");
+    setTimeLeft(time);
+    setState("playing");
   }
 
-  // ✅ start game
   useEffect(() => {
-    setGameState("loading");
-    const t = setTimeout(() => buildBoard(level), 300);
-    return () => clearTimeout(t);
+    buildBoard(level);
   }, [level]);
 
-  // ✅ timer
+  // ✅ Timer
   useEffect(() => {
-    if (gameState !== "playing") return;
+    if (state !== "playing") return;
     if (timeLeft <= 0) {
-      setGameState("lose");
+      setState("lose");
       return;
     }
 
-    const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
-    }, 1000);
+    const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
+    return () => clearInterval(t);
+  }, [timeLeft, state]);
 
-    return () => clearInterval(timer);
-  }, [timeLeft, gameState]);
-
-  // ✅ check win
+  // ✅ Win check
   useEffect(() => {
-    if (cards.length > 0 && matched.size === cards.length && gameState === "playing") {
-      setGameState("win");
+    if (cards.length > 0 && matched.size === cards.length && state === "playing") {
+      setState("win");
+      confetti({
+        particleCount: 160,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
     }
-  }, [matched, cards, gameState]);
+  }, [matched, cards, state]);
 
-  // ✅ handle flip
-  function flipCard(index) {
-    if (busy) return;
-    if (flipped.includes(index)) return;
-    if (matched.has(index)) return;
+  // ✅ Flip card
+  function flipCard(i) {
+    if (busy || matched.has(i) || flipped.includes(i)) return;
     if (flipped.length === 2) return;
 
-    const newFlipped = [...flipped, index];
+    const newFlipped = [...flipped, i];
     setFlipped(newFlipped);
 
     if (newFlipped.length === 2) {
       setBusy(true);
+
       const [a, b] = newFlipped;
-      const first = cards[a];
-      const second = cards[b];
+      const first = cards[a].img;
+      const second = cards[b].img;
 
       setTimeout(() => {
-        if (first.img === second.img) {
-          setMatched((prev) => {
-            const copy = new Set([...prev]);
-            copy.add(a);
-            copy.add(b);
-            return copy;
-          });
+        if (first === second) {
+          setMatched((prev) => new Set([...prev, a, b]));
         }
         setFlipped([]);
         setBusy(false);
-      }, 650);
+      }, 700);
     }
   }
 
-  // ✅ restart same level
   function restart() {
     buildBoard(level);
   }
 
-  // ✅ next level
   function nextLevel() {
-    if (level < levels.length - 1) setLevel((l) => l + 1);
+    if (level < levels.length - 1) setLevel((p) => p + 1);
     else restart();
   }
 
@@ -132,13 +153,13 @@ export default function CineMatch() {
 
         {/* ✅ Header */}
         <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-          <h1 className="text-3xl md:text-4xl font-extrabold">
-            🎴 {lang === "ar" ? "CineMatch — لعبة الذاكرة" : "CineMatch — Memory Game"}
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            🎴 CineMatch — {lang === "ar" ? "لعبة الذاكرة" : "Memory Game"}
           </h1>
 
-          {gameState === "playing" && (
-            <div className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 font-bold">
-              ⏳ {timeLeft}s
+          {state === "playing" && (
+            <div className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 font-bold flex items-center gap-2">
+              ⏳ <span>{timeLeft}s</span>
             </div>
           )}
         </div>
@@ -147,38 +168,48 @@ export default function CineMatch() {
         <div className="flex flex-wrap gap-3 mb-6">
           <button
             onClick={restart}
-            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold"
+            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
           >
             🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
           </button>
 
           <button
             onClick={() => setLevel(0)}
-            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold"
+            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
           >
             🏁 {lang === "ar" ? "العودة للمستوى 1" : "Back to Level 1"}
           </button>
         </div>
 
-        {/* ✅ Game Board */}
-        <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-5 md:p-8">
+        {/* ✅ Game container */}
+        <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-5 md:p-8 overflow-hidden relative">
+
+          {/* ✅ Glow effect */}
+          <div className="absolute -top-32 -left-32 w-80 h-80 bg-red-500/20 blur-[90px]" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-500/10 blur-[110px]" />
+
           <AnimatePresence mode="wait">
 
             {/* ✅ LOADING */}
-            {gameState === "loading" && (
+            {state === "loading" && (
               <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-[420px] flex items-center justify-center text-gray-300 text-lg font-semibold"
+                className="h-[420px] flex flex-col items-center justify-center text-gray-300 font-semibold"
               >
-                ⏳ {lang === "ar" ? "جاري تحميل اللعبة..." : "Loading Game..."}
+                <div className="animate-pulse text-xl mb-3">
+                  ⏳ {lang === "ar" ? "جاري تجهيز البطاقات..." : "Preparing cards..."}
+                </div>
+                <div className="w-56 h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="w-1/2 h-full bg-red-500/60 animate-[pulse_1s_infinite]" />
+                </div>
               </motion.div>
             )}
 
             {/* ✅ PLAYING */}
-            {gameState === "playing" && (
+            {state === "playing" && (
               <motion.div
                 key="playing"
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -186,60 +217,49 @@ export default function CineMatch() {
                 exit={{ opacity: 0 }}
               >
                 <div
-                  className={`grid gap-3 md:gap-4`}
-                  style={{
-                    gridTemplateColumns:
-                      levels[level].pairs <= 4
-                        ? "repeat(4, minmax(0, 1fr))"
-                        : levels[level].pairs <= 6
-                        ? "repeat(4, minmax(0, 1fr))"
-                        : "repeat(4, minmax(0, 1fr))",
-                  }}
+                  className="grid gap-3 md:gap-4"
+                  style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
                 >
                   {cards.map((card, i) => {
                     const isFlipped = flipped.includes(i) || matched.has(i);
 
                     return (
                       <button
-                        key={card.id}
+                        key={card.key}
                         onClick={() => flipCard(i)}
-                        className="aspect-[3/4] rounded-2xl overflow-hidden relative group border border-white/10 bg-black/40"
-                        style={{ perspective: "1000px" }}
+                        className="aspect-[3/4] rounded-2xl overflow-hidden relative border border-white/10 bg-black/40 shadow-md active:scale-[0.98] transition"
                       >
-                        <motion.div
-                          animate={{ rotateY: isFlipped ? 180 : 0 }}
-                          transition={{ duration: 0.45 }}
-                          className="w-full h-full relative"
-                          style={{ transformStyle: "preserve-3d" }}
-                        >
-                          {/* BACK */}
-                          <div
-                            className="absolute inset-0 flex items-center justify-center text-3xl font-extrabold bg-gradient-to-br from-zinc-900 to-black"
-                            style={{ backfaceVisibility: "hidden" }}
-                          >
-                            🎬
+                        {/* ✅ BACK */}
+                        {!isFlipped && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900">
+                            <motion.div
+                              animate={{ rotate: [0, 3, -3, 0] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="text-3xl"
+                            >
+                              🎬
+                            </motion.div>
                           </div>
+                        )}
 
-                          {/* FRONT */}
-                          <div
+                        {/* ✅ FRONT */}
+                        {isFlipped && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             className="absolute inset-0"
-                            style={{
-                              transform: "rotateY(180deg)",
-                              backfaceVisibility: "hidden",
-                            }}
                           >
                             <img
-                              src={`${TMDB_IMG}${card.img}`}
+                              src={TMDB + card.img}
                               alt="poster"
                               className="w-full h-full object-cover"
-                              loading="lazy"
+                              loading="eager"
                               onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://via.placeholder.com/300x450/111/fff?text=CineReview";
+                                e.currentTarget.src = PLACEHOLDER;
                               }}
                             />
-                          </div>
-                        </motion.div>
+                          </motion.div>
+                        )}
 
                         {/* ✅ Matched glow */}
                         {matched.has(i) && (
@@ -253,7 +273,7 @@ export default function CineMatch() {
             )}
 
             {/* ✅ WIN */}
-            {gameState === "win" && (
+            {state === "win" && (
               <motion.div
                 key="win"
                 initial={{ opacity: 0, y: 10 }}
@@ -262,12 +282,11 @@ export default function CineMatch() {
                 className="h-[420px] flex flex-col items-center justify-center text-center"
               >
                 <h2 className="text-3xl font-extrabold text-green-400">
-                  🎉 {lang === "ar" ? "أحسنت! ربحت المستوى" : "Great! You beat the level!"}
+                  🎉 {lang === "ar" ? "أحسنت! ربحت المستوى" : "You Won!"}
                 </h2>
-
                 <p className="text-gray-300 mt-3">
                   {lang === "ar"
-                    ? "انتقلت إلى مستوى أعلى، التحدي أكبر!"
+                    ? "المستوى التالي أصعب... هل أنت مستعد؟"
                     : "Next level is harder — ready?"}
                 </p>
 
@@ -281,7 +300,7 @@ export default function CineMatch() {
             )}
 
             {/* ✅ LOSE */}
-            {gameState === "lose" && (
+            {state === "lose" && (
               <motion.div
                 key="lose"
                 initial={{ opacity: 0, y: 10 }}
@@ -290,13 +309,12 @@ export default function CineMatch() {
                 className="h-[420px] flex flex-col items-center justify-center text-center"
               >
                 <h2 className="text-3xl font-extrabold text-red-400">
-                  😅 {lang === "ar" ? "انتهى الوقت!" : "Time’s up!"}
+                  ⏳ {lang === "ar" ? "انتهى الوقت!" : "Time’s Up!"}
                 </h2>
-
                 <p className="text-gray-300 mt-3">
                   {lang === "ar"
-                    ? "حاول مرة أخرى وركز أكثر!"
-                    : "Try again and focus — you can do it!"}
+                    ? "حاول مرة أخرى وستفوز!"
+                    : "Try again — you got this!"}
                 </p>
 
                 <button
@@ -311,7 +329,7 @@ export default function CineMatch() {
         </div>
 
         {/* ✅ Level indicator */}
-        <div className="mt-6 text-gray-300 font-semibold">
+        <div className="mt-6 text-gray-300 font-semibold text-right">
           {lang === "ar" ? "المستوى:" : "Level:"}{" "}
           <span className="text-white font-extrabold">{level + 1}</span> /{" "}
           {levels.length}
