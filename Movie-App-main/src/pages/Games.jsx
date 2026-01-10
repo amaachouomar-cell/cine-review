@@ -26,7 +26,6 @@ const gamesList = [
     badge: "🧠",
     color: "bg-indigo-600",
   },
-{ to: "/cinematch", label: lang === "ar" ? "🎴 Cine Match" : "🎴 Cine Match" }
 
 ];
 
