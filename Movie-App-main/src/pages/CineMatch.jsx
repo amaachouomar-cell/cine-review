@@ -4,8 +4,6 @@ import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
-
-// ✅ fallback image (no local posters)
 const FALLBACK =
   "https://dummyimage.com/600x900/111/ffffff.png&text=CineReview";
 
@@ -42,56 +40,83 @@ export default function CineMatch() {
   const [timeLeft, setTimeLeft] = useState(levels[level].time);
   const [state, setState] = useState("loading");
   const [combo, setCombo] = useState(0);
+  const [error, setError] = useState("");
 
-  // ✅ fetch posters from TMDB API (safe)
   async function fetchMovies() {
     const key = import.meta.env.VITE_TMDB_KEY;
+
+    if (!key) {
+      throw new Error(
+        lang === "ar"
+          ? "❌ لم يتم العثور على TMDB API KEY. تأكد من VITE_TMDB_KEY داخل .env و Vercel."
+          : "❌ TMDB API KEY not found. Make sure VITE_TMDB_KEY exists in .env and Vercel."
+      );
+    }
+
     const url = `https://api.themoviedb.org/3/trending/movie/day?api_key=${key}`;
+
     const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(
+        lang === "ar"
+          ? "❌ تعذر الاتصال بـ TMDB. تحقق من المفتاح أو الإنترنت."
+          : "❌ Failed to fetch TMDB. Check API key or internet."
+      );
+    }
+
     const data = await res.json();
     return data?.results || [];
   }
 
   async function buildBoard(lvl) {
-    setState("loading");
+    try {
+      setError("");
+      setState("loading");
 
-    const { pairs, time } = levels[lvl];
+      const { pairs, time } = levels[lvl];
 
-    const movies = await fetchMovies();
+      const movies = await fetchMovies();
 
-    // ✅ take only movies that have posters
-    const valid = movies
-      .filter((m) => m.poster_path)
-      .slice(0, pairs);
+      const valid = movies.filter((m) => m.poster_path).slice(0, pairs);
 
-    const posterUrls = valid.map((m) => `${TMDB_IMG}${m.poster_path}`);
+      if (valid.length < pairs) {
+        throw new Error(
+          lang === "ar"
+            ? "❌ لم يتم العثور على عدد كافي من الأفلام لبدء اللعبة."
+            : "❌ Not enough valid movies found to start the game."
+        );
+      }
 
-    // ✅ Preload posters fast
-    const loaded = await Promise.all(posterUrls.map(preload));
+      const posterUrls = valid.map((m) => `${TMDB_IMG}${m.poster_path}`);
 
-    // ✅ Use fallback if any poster fails
-    const finalPosters = loaded.map((img) => (img.ok ? img.src : FALLBACK));
+      const loaded = await Promise.all(posterUrls.map(preload));
 
-    const board = shuffle([...finalPosters, ...finalPosters]).map((img, i) => ({
-      id: i,
-      img,
-      loaded: true,
-    }));
+      const finalPosters = loaded.map((img) => (img.ok ? img.src : FALLBACK));
 
-    setCards(board);
-    setFlipped([]);
-    setMatched(new Set());
-    setBusy(false);
-    setTimeLeft(time);
-    setCombo(0);
-    setState("playing");
+      const board = shuffle([...finalPosters, ...finalPosters]).map((img, i) => ({
+        id: i,
+        img,
+      }));
+
+      setCards(board);
+      setFlipped([]);
+      setMatched(new Set());
+      setBusy(false);
+      setTimeLeft(time);
+      setCombo(0);
+      setState("playing");
+    } catch (err) {
+      setError(err.message);
+      setState("error");
+      setCards([]);
+    }
   }
 
   useEffect(() => {
     buildBoard(level);
   }, [level]);
 
-  // ✅ Timer
   useEffect(() => {
     if (state !== "playing") return;
 
@@ -105,11 +130,10 @@ export default function CineMatch() {
     return () => clearInterval(t);
   }, [timeLeft, state]);
 
-  // ✅ Win
   useEffect(() => {
     if (cards.length > 0 && matched.size === cards.length && state === "playing") {
       setState("win");
-      confetti({ particleCount: 200, spread: 85, origin: { y: 0.65 } });
+      confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
     }
   }, [matched, cards, state]);
 
@@ -153,15 +177,14 @@ export default function CineMatch() {
 
         setFlipped([]);
         setBusy(false);
-      }, 650);
+      }, 600);
     }
   }
 
   return (
-    <div className="min-h-screen text-white px-4 pb-20">
-      <div className="max-w-5xl mx-auto pt-10">
-        {/* ✅ Title */}
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+    <div className="min-h-screen text-white px-4 pb-24">
+      <div className="max-w-5xl mx-auto pt-12">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             🎴 CineMatch — {lang === "ar" ? "لعبة الذاكرة" : "Memory Game"}
           </h1>
@@ -173,27 +196,30 @@ export default function CineMatch() {
           )}
         </div>
 
-        {/* ✅ Combo */}
-        {combo >= 2 && state === "playing" && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 text-green-400 font-bold text-lg"
-          >
-            ⚡ COMBO x{combo}
-          </motion.div>
+        {/* ✅ ERROR STATE */}
+        {state === "error" && (
+          <div className="rounded-[2rem] bg-red-900/20 border border-red-500/20 shadow-xl p-6 text-center">
+            <p className="font-bold text-red-200 text-lg">{error}</p>
+
+            <button
+              onClick={restart}
+              className="mt-5 px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
+            >
+              🔁 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
+            </button>
+          </div>
         )}
 
-        {/* ✅ Loading */}
+        {/* ✅ LOADING */}
         {state === "loading" && (
-          <div className="rounded-[2rem] bg-zinc-900/40 border border-white/10 shadow-xl p-10 text-center">
+          <div className="rounded-[2rem] bg-zinc-900/40 border border-white/10 shadow-xl p-8 text-center">
             <p className="text-lg font-bold">
-              ⏳ {lang === "ar" ? "جاري تحميل الصور بسرعة..." : "Loading posters fast..."}
+              ⏳ {lang === "ar" ? "تحميل البطاقات..." : "Loading cards..."}
             </p>
           </div>
         )}
 
-        {/* ✅ Board */}
+        {/* ✅ GAME BOARD */}
         {state === "playing" && (
           <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-6">
             <div
@@ -218,7 +244,7 @@ export default function CineMatch() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black"
+                          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black text-2xl"
                         >
                           🎬
                         </motion.div>
@@ -236,9 +262,8 @@ export default function CineMatch() {
                       )}
                     </AnimatePresence>
 
-                    {/* ✅ Match Glow */}
                     {matched.has(i) && (
-                      <div className="absolute inset-0 ring-4 ring-green-400/60 shadow-[0_0_50px_rgba(34,197,94,0.55)] rounded-2xl" />
+                      <div className="absolute inset-0 ring-4 ring-green-400/60 shadow-[0_0_55px_rgba(34,197,94,0.6)] rounded-2xl" />
                     )}
                   </motion.button>
                 );
@@ -247,11 +272,29 @@ export default function CineMatch() {
           </div>
         )}
 
-        {/* ✅ Win */}
+        {/* ✅ CONTROLS */}
+        {state === "playing" && (
+          <div className="mt-8 flex gap-3 justify-center flex-wrap">
+            <button
+              onClick={restart}
+              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+            >
+              🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
+            </button>
+
+            <button
+              onClick={() => setLevel(0)}
+              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+            >
+              🏁 {lang === "ar" ? "المستوى الأول" : "Level 1"}
+            </button>
+          </div>
+        )}
+
         {state === "win" && (
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <h2 className="text-3xl font-extrabold text-green-400">
-              ✅ {lang === "ar" ? "لقد فزت!" : "You Win!"}
+              ✅ {lang === "ar" ? "ممتاز! فزت 🎉" : "Great! You won 🎉"}
             </h2>
 
             <div className="mt-6 flex gap-3 justify-center flex-wrap">
@@ -272,39 +315,17 @@ export default function CineMatch() {
           </div>
         )}
 
-        {/* ✅ Lose */}
         {state === "lose" && (
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <h2 className="text-3xl font-extrabold text-red-400">
               ❌ {lang === "ar" ? "انتهى الوقت!" : "Time’s Up!"}
             </h2>
 
-            <div className="mt-6 flex gap-3 justify-center flex-wrap">
-              <button
-                onClick={restart}
-                className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
-              >
-                🔥 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ✅ Footer Controls */}
-        {state !== "loading" && (
-          <div className="mt-8 flex gap-3 justify-center flex-wrap">
             <button
               onClick={restart}
-              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+              className="mt-6 px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
             >
-              🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
-            </button>
-
-            <button
-              onClick={() => setLevel(0)}
-              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
-            >
-              🏁 {lang === "ar" ? "المستوى الأول" : "Level 1"}
+              🔥 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
             </button>
           </div>
         )}
