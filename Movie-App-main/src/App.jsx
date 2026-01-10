@@ -51,7 +51,7 @@ function AnimatedRoutes() {
 <Route path="/games/:slug" element={<GameDetails />} />
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
-<Route path="/cinematch" element={<CineMatch />} />
+<Route path="/games/:slug" element={<GameDetails />} />
 
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />

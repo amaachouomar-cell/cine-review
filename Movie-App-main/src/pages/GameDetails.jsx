@@ -59,6 +59,7 @@ export default function GameDetails() {
   const { lang, t } = useLang();
 
   const game = gamesList[slug];
+if (slug === "cine-match") return <CineMatch />;
 
   if (!game) {
     return (
@@ -66,6 +67,7 @@ export default function GameDetails() {
         <p>Game not found</p>
       </div>
     );
+
   }
 
   return (
