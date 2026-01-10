@@ -39,6 +39,8 @@ export default function CineMatch() {
 
   // ✅ Restart timer each level
   useEffect(() => {
+    console.log("TMDB KEY:", import.meta.env.VITE_TMDB_KEY);
+
     setTimer(level.time);
   }, [level.time]);
 
