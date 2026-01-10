@@ -3,42 +3,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useLang } from "../i18n/LanguageContext";
 
-const TMDB = "https://image.tmdb.org/t/p/w342";
+const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
 
-// ✅ Poster paths (مضمونة + fallback)
-const POSTERS = [
-  "/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg", // Inception
-  "/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", // Fight Club
-  "/qJ2tW6WMUDux911r6m7haRef0WH.jpg", // Dark Knight
-  "/kqjL17yufvn9OVLyXYpvtyrFfak.jpg", // Interstellar
-  "/iQFcwSGbZXMkeyKrxbPnwnRo5fl.jpg", // Joker
-  "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // Godfather
-  "/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", // Parasite
-  "/or06FN3Dka5tukK1e9sl16pB3iy.jpg", // Avengers
-  "/9O7gLzmreU0nGkIB6K3BsJbzvNv.jpg", // Matrix
-  "/hziiv14OpD73u9gAak4XDDfBKa2.jpg", // Shawshank
-];
-
-// ✅ Placeholder guaranteed (local)
-const PLACEHOLDER =
-  "https://via.placeholder.com/342x513/111827/ffffff?text=CineReview";
+// ✅ fallback image (no local posters)
+const FALLBACK =
+  "https://dummyimage.com/600x900/111/ffffff.png&text=CineReview";
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-// ✅ preload images before gameplay
-async function preloadImages(paths) {
-  const promises = paths.map(
-    (p) =>
-      new Promise((resolve) => {
-        const img = new Image();
-        img.src = TMDB + p;
-        img.onload = resolve;
-        img.onerror = resolve;
-      })
-  );
-  await Promise.all(promises);
+function preload(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve({ ok: true, src });
+    img.onerror = () => resolve({ ok: false, src });
+  });
 }
 
 export default function CineMatch() {
@@ -47,8 +28,8 @@ export default function CineMatch() {
   const levels = useMemo(
     () => [
       { pairs: 4, time: 45 },
-      { pairs: 6, time: 60 },
-      { pairs: 8, time: 75 },
+      { pairs: 6, time: 65 },
+      { pairs: 8, time: 85 },
     ],
     []
   );
@@ -59,22 +40,42 @@ export default function CineMatch() {
   const [matched, setMatched] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [timeLeft, setTimeLeft] = useState(levels[level].time);
-  const [state, setState] = useState("loading"); // loading | playing | win | lose
+  const [state, setState] = useState("loading");
+  const [combo, setCombo] = useState(0);
 
-  // ✅ Build board
+  // ✅ fetch posters from TMDB API (safe)
+  async function fetchMovies() {
+    const key = import.meta.env.VITE_TMDB_KEY;
+    const url = `https://api.themoviedb.org/3/trending/movie/day?api_key=${key}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data?.results || [];
+  }
+
   async function buildBoard(lvl) {
     setState("loading");
 
     const { pairs, time } = levels[lvl];
-    const selected = POSTERS.slice(0, pairs);
 
-    // ✅ preload posters for the level to avoid black cards
-    await preloadImages(selected);
+    const movies = await fetchMovies();
 
-    const board = shuffle([...selected, ...selected]).map((img, index) => ({
-      key: index + "-" + img,
+    // ✅ take only movies that have posters
+    const valid = movies
+      .filter((m) => m.poster_path)
+      .slice(0, pairs);
+
+    const posterUrls = valid.map((m) => `${TMDB_IMG}${m.poster_path}`);
+
+    // ✅ Preload posters fast
+    const loaded = await Promise.all(posterUrls.map(preload));
+
+    // ✅ Use fallback if any poster fails
+    const finalPosters = loaded.map((img) => (img.ok ? img.src : FALLBACK));
+
+    const board = shuffle([...finalPosters, ...finalPosters]).map((img, i) => ({
+      id: i,
       img,
-      loaded: false,
+      loaded: true,
     }));
 
     setCards(board);
@@ -82,6 +83,7 @@ export default function CineMatch() {
     setMatched(new Set());
     setBusy(false);
     setTimeLeft(time);
+    setCombo(0);
     setState("playing");
   }
 
@@ -92,8 +94,10 @@ export default function CineMatch() {
   // ✅ Timer
   useEffect(() => {
     if (state !== "playing") return;
+
     if (timeLeft <= 0) {
       setState("lose");
+      setCombo(0);
       return;
     }
 
@@ -101,19 +105,23 @@ export default function CineMatch() {
     return () => clearInterval(t);
   }, [timeLeft, state]);
 
-  // ✅ Win check
+  // ✅ Win
   useEffect(() => {
     if (cards.length > 0 && matched.size === cards.length && state === "playing") {
       setState("win");
-      confetti({
-        particleCount: 160,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      confetti({ particleCount: 200, spread: 85, origin: { y: 0.65 } });
     }
   }, [matched, cards, state]);
 
-  // ✅ Flip card
+  function restart() {
+    buildBoard(level);
+  }
+
+  function nextLevel() {
+    if (level < levels.length - 1) setLevel((p) => p + 1);
+    else setLevel(0);
+  }
+
   function flipCard(i) {
     if (busy || matched.has(i) || flipped.includes(i)) return;
     if (flipped.length === 2) return;
@@ -131,209 +139,175 @@ export default function CineMatch() {
       setTimeout(() => {
         if (first === second) {
           setMatched((prev) => new Set([...prev, a, b]));
+
+          confetti({
+            particleCount: 60,
+            spread: 65,
+            origin: { y: 0.55 },
+          });
+
+          setCombo((c) => c + 1);
+        } else {
+          setCombo(0);
         }
+
         setFlipped([]);
         setBusy(false);
-      }, 700);
+      }, 650);
     }
   }
 
-  function restart() {
-    buildBoard(level);
-  }
-
-  function nextLevel() {
-    if (level < levels.length - 1) setLevel((p) => p + 1);
-    else restart();
-  }
-
   return (
-    <div className="min-h-screen text-white px-4 pb-24">
+    <div className="min-h-screen text-white px-4 pb-20">
       <div className="max-w-5xl mx-auto pt-10">
-
-        {/* ✅ Header */}
+        {/* ✅ Title */}
         <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             🎴 CineMatch — {lang === "ar" ? "لعبة الذاكرة" : "Memory Game"}
           </h1>
 
           {state === "playing" && (
-            <div className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 font-bold flex items-center gap-2">
+            <div className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 font-bold flex items-center gap-2 shadow-lg">
               ⏳ <span>{timeLeft}s</span>
             </div>
           )}
         </div>
 
-        {/* ✅ Controls */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <button
-            onClick={restart}
-            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+        {/* ✅ Combo */}
+        {combo >= 2 && state === "playing" && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 text-green-400 font-bold text-lg"
           >
-            🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
-          </button>
+            ⚡ COMBO x{combo}
+          </motion.div>
+        )}
 
-          <button
-            onClick={() => setLevel(0)}
-            className="px-5 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
-          >
-            🏁 {lang === "ar" ? "العودة للمستوى 1" : "Back to Level 1"}
-          </button>
-        </div>
+        {/* ✅ Loading */}
+        {state === "loading" && (
+          <div className="rounded-[2rem] bg-zinc-900/40 border border-white/10 shadow-xl p-10 text-center">
+            <p className="text-lg font-bold">
+              ⏳ {lang === "ar" ? "جاري تحميل الصور بسرعة..." : "Loading posters fast..."}
+            </p>
+          </div>
+        )}
 
-        {/* ✅ Game container */}
-        <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-5 md:p-8 overflow-hidden relative">
+        {/* ✅ Board */}
+        {state === "playing" && (
+          <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-6">
+            <div
+              className={`grid gap-4 ${
+                levels[level].pairs <= 4 ? "grid-cols-4" : "grid-cols-4 md:grid-cols-6"
+              }`}
+            >
+              {cards.map((c, i) => {
+                const isOpen = flipped.includes(i) || matched.has(i);
 
-          {/* ✅ Glow effect */}
-          <div className="absolute -top-32 -left-32 w-80 h-80 bg-red-500/20 blur-[90px]" />
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-500/10 blur-[110px]" />
+                return (
+                  <motion.button
+                    key={c.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => flipCard(i)}
+                    className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-lg"
+                  >
+                    <AnimatePresence mode="wait">
+                      {!isOpen ? (
+                        <motion.div
+                          key="closed"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black"
+                        >
+                          🎬
+                        </motion.div>
+                      ) : (
+                        <motion.img
+                          key="open"
+                          src={c.img}
+                          alt=""
+                          initial={{ opacity: 0, scale: 1.08 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      )}
+                    </AnimatePresence>
 
-          <AnimatePresence mode="wait">
+                    {/* ✅ Match Glow */}
+                    {matched.has(i) && (
+                      <div className="absolute inset-0 ring-4 ring-green-400/60 shadow-[0_0_50px_rgba(34,197,94,0.55)] rounded-2xl" />
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-            {/* ✅ LOADING */}
-            {state === "loading" && (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="h-[420px] flex flex-col items-center justify-center text-gray-300 font-semibold"
+        {/* ✅ Win */}
+        {state === "win" && (
+          <div className="mt-8 text-center">
+            <h2 className="text-3xl font-extrabold text-green-400">
+              ✅ {lang === "ar" ? "لقد فزت!" : "You Win!"}
+            </h2>
+
+            <div className="mt-6 flex gap-3 justify-center flex-wrap">
+              <button
+                onClick={nextLevel}
+                className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
               >
-                <div className="animate-pulse text-xl mb-3">
-                  ⏳ {lang === "ar" ? "جاري تجهيز البطاقات..." : "Preparing cards..."}
-                </div>
-                <div className="w-56 h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="w-1/2 h-full bg-red-500/60 animate-[pulse_1s_infinite]" />
-                </div>
-              </motion.div>
-            )}
+                ➡️ {lang === "ar" ? "المستوى التالي" : "Next Level"}
+              </button>
 
-            {/* ✅ PLAYING */}
-            {state === "playing" && (
-              <motion.div
-                key="playing"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
+              <button
+                onClick={restart}
+                className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
               >
-                <div
-                  className="grid gap-3 md:gap-4"
-                  style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
-                >
-                  {cards.map((card, i) => {
-                    const isFlipped = flipped.includes(i) || matched.has(i);
+                🔁 {lang === "ar" ? "إعادة" : "Restart"}
+              </button>
+            </div>
+          </div>
+        )}
 
-                    return (
-                      <button
-                        key={card.key}
-                        onClick={() => flipCard(i)}
-                        className="aspect-[3/4] rounded-2xl overflow-hidden relative border border-white/10 bg-black/40 shadow-md active:scale-[0.98] transition"
-                      >
-                        {/* ✅ BACK */}
-                        {!isFlipped && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900">
-                            <motion.div
-                              animate={{ rotate: [0, 3, -3, 0] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                              className="text-3xl"
-                            >
-                              🎬
-                            </motion.div>
-                          </div>
-                        )}
+        {/* ✅ Lose */}
+        {state === "lose" && (
+          <div className="mt-8 text-center">
+            <h2 className="text-3xl font-extrabold text-red-400">
+              ❌ {lang === "ar" ? "انتهى الوقت!" : "Time’s Up!"}
+            </h2>
 
-                        {/* ✅ FRONT */}
-                        {isFlipped && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0"
-                          >
-                            <img
-                              src={TMDB + card.img}
-                              alt="poster"
-                              className="w-full h-full object-cover"
-                              loading="eager"
-                              onError={(e) => {
-                                e.currentTarget.src = PLACEHOLDER;
-                              }}
-                            />
-                          </motion.div>
-                        )}
-
-                        {/* ✅ Matched glow */}
-                        {matched.has(i) && (
-                          <div className="absolute inset-0 ring-4 ring-green-500/50 rounded-2xl pointer-events-none" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* ✅ WIN */}
-            {state === "win" && (
-              <motion.div
-                key="win"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="h-[420px] flex flex-col items-center justify-center text-center"
+            <div className="mt-6 flex gap-3 justify-center flex-wrap">
+              <button
+                onClick={restart}
+                className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
               >
-                <h2 className="text-3xl font-extrabold text-green-400">
-                  🎉 {lang === "ar" ? "أحسنت! ربحت المستوى" : "You Won!"}
-                </h2>
-                <p className="text-gray-300 mt-3">
-                  {lang === "ar"
-                    ? "المستوى التالي أصعب... هل أنت مستعد؟"
-                    : "Next level is harder — ready?"}
-                </p>
+                🔥 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
+              </button>
+            </div>
+          </div>
+        )}
 
-                <button
-                  onClick={nextLevel}
-                  className="mt-6 px-7 py-3 rounded-2xl bg-green-600 hover:bg-green-700 transition font-extrabold shadow-lg"
-                >
-                  🚀 {lang === "ar" ? "المستوى التالي" : "Next Level"}
-                </button>
-              </motion.div>
-            )}
+        {/* ✅ Footer Controls */}
+        {state !== "loading" && (
+          <div className="mt-8 flex gap-3 justify-center flex-wrap">
+            <button
+              onClick={restart}
+              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+            >
+              🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
+            </button>
 
-            {/* ✅ LOSE */}
-            {state === "lose" && (
-              <motion.div
-                key="lose"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="h-[420px] flex flex-col items-center justify-center text-center"
-              >
-                <h2 className="text-3xl font-extrabold text-red-400">
-                  ⏳ {lang === "ar" ? "انتهى الوقت!" : "Time’s Up!"}
-                </h2>
-                <p className="text-gray-300 mt-3">
-                  {lang === "ar"
-                    ? "حاول مرة أخرى وستفوز!"
-                    : "Try again — you got this!"}
-                </p>
-
-                <button
-                  onClick={restart}
-                  className="mt-6 px-7 py-3 rounded-2xl bg-red-600 hover:bg-red-700 transition font-extrabold shadow-lg"
-                >
-                  🔁 {lang === "ar" ? "إعادة المحاولة" : "Retry"}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* ✅ Level indicator */}
-        <div className="mt-6 text-gray-300 font-semibold text-right">
-          {lang === "ar" ? "المستوى:" : "Level:"}{" "}
-          <span className="text-white font-extrabold">{level + 1}</span> /{" "}
-          {levels.length}
-        </div>
+            <button
+              onClick={() => setLevel(0)}
+              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
+            >
+              🏁 {lang === "ar" ? "المستوى الأول" : "Level 1"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
