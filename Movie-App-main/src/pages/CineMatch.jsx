@@ -1,335 +1,324 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { useLang } from "../i18n/LanguageContext";
 
-const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
-const FALLBACK =
-  "https://dummyimage.com/600x900/111/ffffff.png&text=CineReview";
+// ✅ TMDB image helper
+const img = (path, size = "w342") =>
+  path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
 
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
-function preload(src) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => resolve({ ok: true, src });
-    img.onerror = () => resolve({ ok: false, src });
-  });
-}
+// ✅ Premium card back
+const BACK_IMG =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Film_reel_icon.svg/512px-Film_reel_icon.svg.png";
 
 export default function CineMatch() {
-  const { lang } = useLang();
+  const TMDB_KEY = import.meta.env.VITE_TMDB_KEY; // ✅ Correct for VITE
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // ✅ levels
   const levels = useMemo(
     () => [
-      { pairs: 4, time: 45 },
+      { pairs: 4, time: 50 },
       { pairs: 6, time: 65 },
-      { pairs: 8, time: 85 },
+      { pairs: 8, time: 80 },
+      { pairs: 10, time: 95 },
     ],
     []
   );
 
-  const [level, setLevel] = useState(0);
+  const [levelIndex, setLevelIndex] = useState(0);
+  const level = levels[levelIndex];
+
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
-  const [matched, setMatched] = useState(new Set());
-  const [busy, setBusy] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(levels[level].time);
-  const [state, setState] = useState("loading");
-  const [combo, setCombo] = useState(0);
-  const [error, setError] = useState("");
+  const [matched, setMatched] = useState([]);
+  const [timer, setTimer] = useState(level.time);
+  const [gameOver, setGameOver] = useState(false);
+  const [win, setWin] = useState(false);
 
-  async function fetchMovies() {
-    const key = import.meta.env.VITE_TMDB_KEY;
+  // ✅ Restart timer each level
+  useEffect(() => {
+    setTimer(level.time);
+  }, [level.time]);
 
-    if (!key) {
-      throw new Error(
-        lang === "ar"
-          ? "❌ لم يتم العثور على TMDB API KEY. تأكد من VITE_TMDB_KEY داخل .env و Vercel."
-          : "❌ TMDB API KEY not found. Make sure VITE_TMDB_KEY exists in .env and Vercel."
-      );
-    }
+  // ✅ Countdown
+  useEffect(() => {
+    if (gameOver || win) return;
+    if (!cards.length) return;
 
-    const url = `https://api.themoviedb.org/3/trending/movie/day?api_key=${key}`;
+    const interval = setInterval(() => {
+      setTimer((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setGameOver(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
 
-    const res = await fetch(url);
+    return () => clearInterval(interval);
+  }, [cards.length, gameOver, win]);
 
-    if (!res.ok) {
-      throw new Error(
-        lang === "ar"
-          ? "❌ تعذر الاتصال بـ TMDB. تحقق من المفتاح أو الإنترنت."
-          : "❌ Failed to fetch TMDB. Check API key or internet."
-      );
-    }
-
-    const data = await res.json();
-    return data?.results || [];
-  }
-
-  async function buildBoard(lvl) {
+  // ✅ Fetch movies posters from TMDB
+  async function loadLevel() {
     try {
       setError("");
-      setState("loading");
+      setLoading(true);
+      setGameOver(false);
+      setWin(false);
+      setFlipped([]);
+      setMatched([]);
 
-      const { pairs, time } = levels[lvl];
-
-      const movies = await fetchMovies();
-
-      const valid = movies.filter((m) => m.poster_path).slice(0, pairs);
-
-      if (valid.length < pairs) {
-        throw new Error(
-          lang === "ar"
-            ? "❌ لم يتم العثور على عدد كافي من الأفلام لبدء اللعبة."
-            : "❌ Not enough valid movies found to start the game."
+      if (!TMDB_KEY) {
+        setLoading(false);
+        return setError(
+          "❌ لم يتم العثور على TMDB API KEY. تأكد من VITE_TMDB_KEY في Vercel و env."
         );
       }
 
-      const posterUrls = valid.map((m) => `${TMDB_IMG}${m.poster_path}`);
+      const res = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=en-US&page=1`
+      );
 
-      const loaded = await Promise.all(posterUrls.map(preload));
+      if (!res.ok) throw new Error("TMDB fetch failed");
 
-      const finalPosters = loaded.map((img) => (img.ok ? img.src : FALLBACK));
+      const data = await res.json();
+      const movies = data.results
+        .filter((m) => m.poster_path)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, level.pairs);
 
-      const board = shuffle([...finalPosters, ...finalPosters]).map((img, i) => ({
-        id: i,
-        img,
-      }));
+      // ✅ create pairs
+      const paired = movies.flatMap((m) => [
+        { id: `${m.id}-a`, movieId: m.id, poster: img(m.poster_path), title: m.title },
+        { id: `${m.id}-b`, movieId: m.id, poster: img(m.poster_path), title: m.title },
+      ]);
 
-      setCards(board);
-      setFlipped([]);
-      setMatched(new Set());
-      setBusy(false);
-      setTimeLeft(time);
-      setCombo(0);
-      setState("playing");
-    } catch (err) {
-      setError(err.message);
-      setState("error");
-      setCards([]);
+      // ✅ shuffle
+      const shuffled = paired.sort(() => 0.5 - Math.random());
+
+      // ✅ preload posters
+      await Promise.all(
+        shuffled.map(
+          (c) =>
+            new Promise((resolve) => {
+              const image = new Image();
+              image.src = c.poster;
+              image.onload = resolve;
+              image.onerror = resolve;
+            })
+        )
+      );
+
+      setCards(shuffled);
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+      setError("❌ فشل تحميل البوسترات، حاول مرة أخرى.");
     }
   }
 
+  // ✅ Initial load
   useEffect(() => {
-    buildBoard(level);
-  }, [level]);
+    loadLevel();
+  }, [levelIndex]);
 
-  useEffect(() => {
-    if (state !== "playing") return;
-
-    if (timeLeft <= 0) {
-      setState("lose");
-      setCombo(0);
-      return;
-    }
-
-    const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    return () => clearInterval(t);
-  }, [timeLeft, state]);
-
-  useEffect(() => {
-    if (cards.length > 0 && matched.size === cards.length && state === "playing") {
-      setState("win");
-      confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
-    }
-  }, [matched, cards, state]);
-
-  function restart() {
-    buildBoard(level);
-  }
-
-  function nextLevel() {
-    if (level < levels.length - 1) setLevel((p) => p + 1);
-    else setLevel(0);
-  }
-
-  function flipCard(i) {
-    if (busy || matched.has(i) || flipped.includes(i)) return;
+  // ✅ Flip card logic
+  function flipCard(card) {
+    if (loading || gameOver || win) return;
     if (flipped.length === 2) return;
+    if (matched.includes(card.movieId)) return;
+    if (flipped.find((f) => f.id === card.id)) return;
 
-    const newFlipped = [...flipped, i];
+    const newFlipped = [...flipped, card];
     setFlipped(newFlipped);
 
     if (newFlipped.length === 2) {
-      setBusy(true);
-
       const [a, b] = newFlipped;
-      const first = cards[a].img;
-      const second = cards[b].img;
 
-      setTimeout(() => {
-        if (first === second) {
-          setMatched((prev) => new Set([...prev, a, b]));
-
+      if (a.movieId === b.movieId) {
+        setMatched((m) => [...m, a.movieId]);
+        setTimeout(() => {
           confetti({
-            particleCount: 60,
-            spread: 65,
-            origin: { y: 0.55 },
+            particleCount: 70,
+            spread: 90,
+            origin: { y: 0.6 },
           });
+        }, 150);
 
-          setCombo((c) => c + 1);
-        } else {
-          setCombo(0);
-        }
-
-        setFlipped([]);
-        setBusy(false);
-      }, 600);
+        setTimeout(() => setFlipped([]), 500);
+      } else {
+        setTimeout(() => setFlipped([]), 900);
+      }
     }
   }
 
-  return (
-    <div className="min-h-screen text-white px-4 pb-24">
-      <div className="max-w-5xl mx-auto pt-12">
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            🎴 CineMatch — {lang === "ar" ? "لعبة الذاكرة" : "Memory Game"}
-          </h1>
+  // ✅ Win check
+  useEffect(() => {
+    if (!cards.length) return;
+    if (matched.length === level.pairs) {
+      setWin(true);
 
-          {state === "playing" && (
-            <div className="px-5 py-2 rounded-2xl bg-zinc-900/50 border border-white/10 font-bold flex items-center gap-2 shadow-lg">
-              ⏳ <span>{timeLeft}s</span>
-            </div>
+      confetti({
+        particleCount: 200,
+        spread: 140,
+        origin: { y: 0.5 },
+      });
+    }
+  }, [matched, cards.length]);
+
+  // ✅ Next Level
+  function nextLevel() {
+    if (levelIndex < levels.length - 1) {
+      setLevelIndex((l) => l + 1);
+    } else {
+      setLevelIndex(0);
+    }
+  }
+
+  // ✅ Restart Level
+  function restartLevel() {
+    loadLevel();
+  }
+
+  return (
+    <div className="min-h-screen px-4 py-10 max-w-5xl mx-auto text-white">
+      {/* ✅ Header */}
+      <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+        <h1 className="text-3xl font-bold tracking-wide">
+          🎴 CineMatch — <span className="text-red-500">لعبة الذاكرة</span>
+        </h1>
+
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+            ⏳ {timer}s
+          </div>
+          <div className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+            🎯 المستوى: {levelIndex + 1}
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ Error */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center mb-8"
+        >
+          <p className="text-lg font-semibold">{error}</p>
+          <button
+            onClick={loadLevel}
+            className="mt-4 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 transition font-semibold"
+          >
+            🔁 حاول مرة أخرى
+          </button>
+        </motion.div>
+      )}
+
+      {/* ✅ Loading */}
+      {loading && (
+        <div className="text-center py-20 text-lg opacity-80">
+          ⏳ جاري تحميل اللعبة...
+        </div>
+      )}
+
+      {/* ✅ Game board */}
+      {!loading && !error && (
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          {cards.map((card) => {
+            const isFlipped =
+              flipped.some((f) => f.id === card.id) ||
+              matched.includes(card.movieId);
+
+            return (
+              <motion.button
+                key={card.id}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                onClick={() => flipCard(card)}
+                className="relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 shadow-xl aspect-[3/4]"
+              >
+                {/* ✅ Front */}
+                <motion.div
+                  animate={{ rotateY: isFlipped ? 0 : 180 }}
+                  transition={{ duration: 0.45 }}
+                  className="absolute inset-0"
+                  style={{ backfaceVisibility: "hidden" }}
+                >
+                  <img
+                    src={card.poster}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    draggable={false}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                </motion.div>
+
+                {/* ✅ Back */}
+                <motion.div
+                  animate={{ rotateY: isFlipped ? 180 : 0 }}
+                  transition={{ duration: 0.45 }}
+                  className="absolute inset-0 flex items-center justify-center bg-zinc-950"
+                  style={{ backfaceVisibility: "hidden" }}
+                >
+                  <img
+                    src={BACK_IMG}
+                    alt="back"
+                    className="w-14 opacity-80"
+                    draggable={false}
+                  />
+                </motion.div>
+
+                {/* ✅ Matched Glow */}
+                {matched.includes(card.movieId) && (
+                  <div className="absolute inset-0 ring-4 ring-green-400/70 shadow-[0_0_40px_rgba(34,197,94,0.6)] rounded-2xl" />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ✅ Footer actions */}
+      {!loading && !error && (
+        <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
+          <button
+            onClick={restartLevel}
+            className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition font-semibold"
+          >
+            🔁 إعادة نفس المستوى
+          </button>
+
+          <button
+            onClick={() => setLevelIndex(0)}
+            className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition font-semibold"
+          >
+            🏁 العودة للمستوى الأول
+          </button>
+
+          {win && (
+            <button
+              onClick={nextLevel}
+              className="px-8 py-3 rounded-xl bg-green-600 hover:bg-green-700 transition font-bold"
+            >
+              🚀 التالي (مستوى أعلى)
+            </button>
+          )}
+
+          {gameOver && (
+            <button
+              onClick={restartLevel}
+              className="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 transition font-bold"
+            >
+              💀 انتهى الوقت! حاول مجددًا
+            </button>
           )}
         </div>
-
-        {/* ✅ ERROR STATE */}
-        {state === "error" && (
-          <div className="rounded-[2rem] bg-red-900/20 border border-red-500/20 shadow-xl p-6 text-center">
-            <p className="font-bold text-red-200 text-lg">{error}</p>
-
-            <button
-              onClick={restart}
-              className="mt-5 px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
-            >
-              🔁 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
-            </button>
-          </div>
-        )}
-
-        {/* ✅ LOADING */}
-        {state === "loading" && (
-          <div className="rounded-[2rem] bg-zinc-900/40 border border-white/10 shadow-xl p-8 text-center">
-            <p className="text-lg font-bold">
-              ⏳ {lang === "ar" ? "تحميل البطاقات..." : "Loading cards..."}
-            </p>
-          </div>
-        )}
-
-        {/* ✅ GAME BOARD */}
-        {state === "playing" && (
-          <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 shadow-2xl backdrop-blur-xl p-6">
-            <div
-              className={`grid gap-4 ${
-                levels[level].pairs <= 4 ? "grid-cols-4" : "grid-cols-4 md:grid-cols-6"
-              }`}
-            >
-              {cards.map((c, i) => {
-                const isOpen = flipped.includes(i) || matched.has(i);
-
-                return (
-                  <motion.button
-                    key={c.id}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => flipCard(i)}
-                    className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-lg"
-                  >
-                    <AnimatePresence mode="wait">
-                      {!isOpen ? (
-                        <motion.div
-                          key="closed"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black text-2xl"
-                        >
-                          🎬
-                        </motion.div>
-                      ) : (
-                        <motion.img
-                          key="open"
-                          src={c.img}
-                          alt=""
-                          initial={{ opacity: 0, scale: 1.08 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      )}
-                    </AnimatePresence>
-
-                    {matched.has(i) && (
-                      <div className="absolute inset-0 ring-4 ring-green-400/60 shadow-[0_0_55px_rgba(34,197,94,0.6)] rounded-2xl" />
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ✅ CONTROLS */}
-        {state === "playing" && (
-          <div className="mt-8 flex gap-3 justify-center flex-wrap">
-            <button
-              onClick={restart}
-              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
-            >
-              🔁 {lang === "ar" ? "إعادة نفس المستوى" : "Restart Level"}
-            </button>
-
-            <button
-              onClick={() => setLevel(0)}
-              className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
-            >
-              🏁 {lang === "ar" ? "المستوى الأول" : "Level 1"}
-            </button>
-          </div>
-        )}
-
-        {state === "win" && (
-          <div className="mt-10 text-center">
-            <h2 className="text-3xl font-extrabold text-green-400">
-              ✅ {lang === "ar" ? "ممتاز! فزت 🎉" : "Great! You won 🎉"}
-            </h2>
-
-            <div className="mt-6 flex gap-3 justify-center flex-wrap">
-              <button
-                onClick={nextLevel}
-                className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
-              >
-                ➡️ {lang === "ar" ? "المستوى التالي" : "Next Level"}
-              </button>
-
-              <button
-                onClick={restart}
-                className="px-6 py-3 rounded-2xl bg-zinc-900/60 border border-white/10 hover:bg-zinc-800 transition font-bold shadow"
-              >
-                🔁 {lang === "ar" ? "إعادة" : "Restart"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {state === "lose" && (
-          <div className="mt-10 text-center">
-            <h2 className="text-3xl font-extrabold text-red-400">
-              ❌ {lang === "ar" ? "انتهى الوقت!" : "Time’s Up!"}
-            </h2>
-
-            <button
-              onClick={restart}
-              className="mt-6 px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-500 transition font-bold shadow-lg"
-            >
-              🔥 {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
-            </button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
