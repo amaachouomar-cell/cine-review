@@ -22,6 +22,7 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import CineMatch from "./pages/CineMatch";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -50,6 +51,7 @@ function AnimatedRoutes() {
 <Route path="/games/:slug" element={<GameDetails />} />
 <Route path="/blog" element={<Blog />} />
 <Route path="/blog/:slug" element={<BlogPost />} />
+<Route path="/cinematch" element={<CineMatch />} />
 
           {/* ✅ Legal Pages */}
           <Route path="/about" element={<About />} />
