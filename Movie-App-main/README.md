@@ -72,7 +72,7 @@ npm install
 ### 3. Set up environment variables
 Create a .env file in the root with your TMDB API key:
 ```env
-VITE_TMDB_API_KEY=your_api_key_here
+VITE_TMDB_API_KEY=ae02cb7ab06696368a66eeb1be7db0d9
 ```
 
 ### 4. Run locally

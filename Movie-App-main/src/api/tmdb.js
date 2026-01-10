@@ -1,65 +1,55 @@
-import axios from "axios";
-
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-console.log("TMDB KEY:", API_KEY);
-
 const BASE_URL = "https://api.themoviedb.org/3";
 
-/* ✅ Helper */
-async function fetchJson(url, params = {}) {
-  if (!API_KEY) {
-    throw new Error("❌ TMDB API KEY is missing. Check your .env file!");
-  }
+const TMDB_TOKEN = import.meta.env.VITE_TMDB_TOKEN;
 
-  const res = await axios.get(`${BASE_URL}${url}`, {
-    params: {
-      api_key: API_KEY,
-      ...params,
+if (!TMDB_TOKEN) {
+  console.warn("⚠️ TMDB TOKEN missing: add VITE_TMDB_TOKEN in .env and Vercel.");
+}
+
+// ✅ fetch helper
+export async function tmdbFetch(endpoint, params = {}) {
+  const url = new URL(`${BASE_URL}${endpoint}`);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) url.searchParams.set(key, value);
+  });
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${TMDB_TOKEN}`,
+      "Content-Type": "application/json;charset=utf-8",
     },
   });
 
-  return res.data;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`TMDB Error ${res.status}: ${text}`);
+  }
+
+  return res.json();
 }
 
-/* ✅ Popular */
-export const getPopularMovies = (page = 1) =>
-  fetchJson("/movie/popular", { page });
+/* ✅ دوال تستخدم في الموقع */
+export async function getTrendingMovies() {
+  return tmdbFetch("/trending/movie/week");
+}
 
-/* ✅ Trending */
-export const getTrendingMovies = (page = 1) =>
-  fetchJson("/trending/movie/week", { page });
+export async function getPopularMovies() {
+  return tmdbFetch("/movie/popular");
+}
 
-/* ✅ Top Rated */
-export const getTopRatedMovies = (page = 1) =>
-  fetchJson("/movie/top_rated", { page });
+export async function getTopRatedMovies() {
+  return tmdbFetch("/movie/top_rated");
+}
 
-/* ✅ Search */
-export const searchMovies = (query, page = 1) =>
-  fetchJson("/search/movie", { query, page });
+export async function searchMovies(query) {
+  return tmdbFetch("/search/movie", { query, include_adult: false });
+}
 
-/* ✅ Movie Details */
-export const getMovieDetails = (id) => fetchJson(`/movie/${id}`);
+export async function getMovieDetails(id) {
+  return tmdbFetch(`/movie/${id}`);
+}
 
-/* ✅ Videos */
-export const getMovieVideos = (id) => fetchJson(`/movie/${id}/videos`);
-
-/* ✅ Credits */
-export const getMovieCredits = (id) => fetchJson(`/movie/${id}/credits`);
-
-/* ✅ Similar */
-export const getSimilarMovies = (id) => fetchJson(`/movie/${id}/similar`);
-
-/* ✅ Genres */
-export const getGenres = async () => {
-  const data = await fetchJson("/genre/movie/list");
-  return data.genres;
-};
-
-/* ✅ Movies by Genre */
-export const getMoviesByGenre = async (genreId, page = 1) => {
-  const data = await fetchJson("/discover/movie", {
-    with_genres: genreId,
-    page,
-  });
-  return data.results;
-};
+export async function getMovieImages(id) {
+  return tmdbFetch(`/movie/${id}/images`);
+}
