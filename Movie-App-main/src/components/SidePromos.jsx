@@ -1,166 +1,207 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const LS_KEY = "cine_side_cloud_closed_v1";
-
-const SHOW_MS = 4500;   // يظهر 4.5 ثواني
-const HIDE_MS = 55500;  // يختفي 55.5 ثانية
+const LS_KEY = "cine_sidepromos_dismiss_v2";
 
 export default function SidePromos() {
   const location = useLocation();
 
-  const [closed, setClosed] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // لا نظهره في صفحات معينة (اختياري)
+  const hideOnRoutes = ["/admin", "/login"];
+  const shouldHide = hideOnRoutes.some((p) => location.pathname.startsWith(p));
 
-  const [autoVisible, setAutoVisible] = useState(true); // للنبض التلقائي
-  const [open, setOpen] = useState(false);              // popover
+  const items = useMemo(
+    () => [
+      {
+        id: "blog",
+        title: "Blog",
+        subtitle: "مقالات مختارة",
+        icon: "📰",
+        to: "/blog",
+      },
+      {
+        id: "games",
+        title: "Games",
+        subtitle: "ألعاب خفيفة",
+        icon: "🎮",
+        to: "/games",
+      },
+    ],
+    []
+  );
 
-  useEffect(() => {
-    setClosed(localStorage.getItem(LS_KEY) === "1");
-    setMounted(true);
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  const timers = useRef({ show: null, hide: null, next: null });
+
+  const dismissed = useMemo(() => {
+    try {
+      return localStorage.getItem(LS_KEY) === "1";
+    } catch {
+      return false;
+    }
   }, []);
 
-  // (اختياري) اخفاء في صفحات معينة
-  const hiddenOn = useMemo(() => {
-    const path = location?.pathname || "/";
-    // مثال: اخفاء في صفحات التفاصيل كي لا يزعج
-    // return path.startsWith("/movie/");
-    return false;
-  }, [location?.pathname]);
+  // إعدادات الظهور (خفيفة وغير مزعجة)
+  const SHOW_FOR_MS = 3800; // مدة الظهور
+  const WAIT_BETWEEN_MS = 32000; // مدة الاختفاء بين كل إشعار (حوالي نصف دقيقة)
+  const FIRST_DELAY_MS = 2500; // أول مرة بعد دخول الصفحة
 
-  // دورة الظهور/الاختفاء التلقائية (بدون إزعاج)
   useEffect(() => {
-    if (!mounted || closed || hiddenOn) return;
+    if (dismissed || shouldHide) return;
 
-    let showTimer;
-    let loop;
-
-    const cycle = () => {
-      setAutoVisible(true);
-      showTimer = setTimeout(() => setAutoVisible(false), SHOW_MS);
+    const clearAll = () => {
+      const t = timers.current;
+      if (t.show) clearTimeout(t.show);
+      if (t.hide) clearTimeout(t.hide);
+      if (t.next) clearTimeout(t.next);
+      timers.current = { show: null, hide: null, next: null };
     };
 
-    cycle();
-    loop = setInterval(cycle, SHOW_MS + HIDE_MS);
+    const cycle = (delayMs) => {
+      clearAll();
 
-    return () => {
-      clearTimeout(showTimer);
-      clearInterval(loop);
+      timers.current.show = setTimeout(() => {
+        setVisible(true);
+
+        timers.current.hide = setTimeout(() => {
+          setVisible(false);
+
+          timers.current.next = setTimeout(() => {
+            setIndex((i) => (i + 1) % items.length);
+            cycle(700); // يرجع بسرعة بسيطة
+          }, WAIT_BETWEEN_MS);
+        }, SHOW_FOR_MS);
+      }, delayMs);
     };
-  }, [mounted, closed, hiddenOn]);
 
-  // اغلاق popover عند تغيير الصفحة
-  useEffect(() => {
-    setOpen(false);
-  }, [location?.pathname]);
+    cycle(FIRST_DELAY_MS);
 
-  if (!mounted || closed || hiddenOn) return null;
+    return () => clearAll();
+  }, [dismissed, shouldHide, items.length]);
 
-  const closeForever = () => {
-    localStorage.setItem(LS_KEY, "1");
-    setClosed(true);
+  if (dismissed || shouldHide) return null;
+
+  const item = items[index];
+
+  const dismissForever = () => {
+    try {
+      localStorage.setItem(LS_KEY, "1");
+    } catch {}
+    setVisible(false);
   };
 
-  // عندما تكون اللوحة مفتوحة: نظهر السحابة دائمًا (بدون اختفاء)
-  const shouldShow = open ? true : autoVisible;
-
   return (
-    <div className="fixed left-1 bottom-20 z-[9999]">
-      {/* Bubble Cloud */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={[
-          "relative",
-          "w-11 h-11 rounded-full",
-          "backdrop-blur-2xl",
-          "border border-white/10",
-          "bg-white/5 hover:bg-white/10",
-          "shadow-[0_14px_40px_rgba(0,0,0,.45)]",
-          "transition-all duration-300",
-          "grid place-items-center",
-          shouldShow ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 pointer-events-none",
-        ].join(" ")}
-        aria-label="Open quick links"
-        title="Quick"
-      >
-        {/* تأثير سحابة/ماء */}
-        <span className="absolute inset-0 rounded-full overflow-hidden">
-          <span className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-white/10 blur-2xl" />
-          <span className="absolute -bottom-6 -right-6 w-16 h-16 rounded-full bg-white/10 blur-2xl" />
-          <span className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" />
-        </span>
-
-        {/* أيقونة */}
-        <span className="relative text-white/85 text-[10px]">
-          🫧
-        </span>
-
-        {/* نقطة إشعار خفيفة */}
-        <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500/80 shadow-[0_0_0_3px_rgba(0,0,0,.35)] animate-pulse" />
-      </button>
-
-      {/* Popover صغير جدا */}
+    <>
+      {/* Toast */}
       <div
         className={[
-          "mt-2",
-          "w-[170px] max-w-[55vw]",
-          "rounded-2xl border border-white/10",
-          "bg-black/35 backdrop-blur-2xl",
-          "shadow-[0_18px_55px_rgba(0,0,0,.6)]",
-          "overflow-hidden",
-          "transition-all duration-200",
-          open ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-1 scale-95 pointer-events-none",
+          "fixed z-[70] left-3 bottom-24 md:bottom-6",
+          "pointer-events-none",
         ].join(" ")}
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-          <span className="text-[11px] font-semibold text-white/80">
-            اكتشف المزيد
-          </span>
-          <button
-            onClick={closeForever}
-            className="text-[12px] px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition"
-            title="إخفاء نهائي"
+        <div
+          className={[
+            // حركة لطيفة: يظهر/يختفي + سلاسة
+            "transition-all duration-500 ease-out",
+            visible
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 translate-y-3 scale-[0.98]",
+          ].join(" ")}
+          style={{
+            // نخليه صغير جدًا ومايغطي شيء
+            width: "min(270px, 78vw)",
+            pointerEvents: visible ? "auto" : "none",
+          }}
+        >
+          <div
+            className={[
+              "relative overflow-hidden rounded-2xl",
+              "border border-white/10",
+              "bg-white/[0.06] backdrop-blur-xl",
+              "shadow-[0_18px_70px_rgba(0,0,0,0.45)]",
+            ].join(" ")}
           >
-            ✕
-          </button>
-        </div>
+            {/* لمعة/سحابة مائية */}
+            <div
+              className="absolute -inset-10 opacity-70"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.16), transparent 55%), radial-gradient(circle at 80% 20%, rgba(0,180,255,0.14), transparent 52%), radial-gradient(circle at 30% 85%, rgba(255,0,90,0.10), transparent 55%)",
+                filter: "blur(14px)",
+                animation: "cineFloat 6.5s ease-in-out infinite",
+              }}
+            />
 
-        <div className="p-2 flex flex-col gap-2">
-          <CloudLink to="/blog" icon="📰" title="Blog" subtitle="مقالات مختارة" />
-          <CloudLink to="/games" icon="🎮" title="Games" subtitle="ألعاب خفيفة" />
-        </div>
+            <div className="relative px-3 py-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-9 w-9 rounded-full grid place-items-center border border-white/10 bg-white/5"
+                  aria-hidden="true"
+                >
+                  <span className="text-lg">{item.icon}</span>
+                </div>
 
-        <div className="px-3 pb-3 text-[10px] text-white/45">
-          تظهر أحيانًا فقط — بدون إزعاج.
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold text-white/90 leading-5 truncate">
+                    {item.title}
+                  </div>
+                  <div className="text-[11px] text-white/60 truncate">
+                    {item.subtitle}
+                  </div>
+                </div>
+
+                {/* إغلاق */}
+                <button
+                  onClick={() => setVisible(false)}
+                  className="h-8 w-8 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 grid place-items-center"
+                  title="إغلاق"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <Link
+                  to={item.to}
+                  className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-[12px] font-semibold bg-white/10 hover:bg-white/15 border border-white/10 text-white/90"
+                >
+                  اكتشف الآن →
+                </Link>
+
+                <button
+                  onClick={dismissForever}
+                  className="text-[11px] text-white/55 hover:text-white/80 underline underline-offset-4"
+                  title="عدم الإظهار مرة أخرى"
+                >
+                  لا تظهر مرة أخرى
+                </button>
+              </div>
+            </div>
+
+            {/* شريط صغير للتقدم (اختياري) */}
+            <div className="relative h-[2px] bg-white/5 overflow-hidden">
+              <div
+                className="h-full bg-white/30"
+                style={{
+                  width: visible ? "100%" : "0%",
+                  transition: visible ? `width ${SHOW_FOR_MS}ms linear` : "none",
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function CloudLink({ to, icon, title, subtitle }) {
-  return (
-    <Link
-      to={to}
-      className="
-        group flex items-center gap-2
-        rounded-xl border border-white/10
-        bg-white/5 hover:bg-white/10
-        px-3 py-2 transition
-      "
-    >
-      <span className="text-[15px]">{icon}</span>
-      <span className="leading-tight">
-        <span className="block text-[12px] font-semibold text-white">
-          {title}
-        </span>
-        <span className="block text-[10px] text-white/60">
-          {subtitle}
-        </span>
-      </span>
-      <span className="ml-auto text-white/55 group-hover:text-white transition text-[14px]">
-        ›
-      </span>
-    </Link>
+      {/* CSS Animation */}
+      <style>{`
+        @keyframes cineFloat {
+          0%   { transform: translate3d(0,0,0) scale(1); }
+          50%  { transform: translate3d(0,-6px,0) scale(1.02); }
+          100% { transform: translate3d(0,0,0) scale(1); }
+        }
+      `}</style>
+    </>
   );
 }
