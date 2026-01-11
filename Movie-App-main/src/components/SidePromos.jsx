@@ -86,7 +86,7 @@ export default function SidePromos() {
     <div
       style={{
         position: "fixed",
-        left: 10,
+        left: 5,
         bottom: 12,
         zIndex: 9999,
         pointerEvents: "none", // مهم: ما يغطيش الصفحة
@@ -99,7 +99,7 @@ export default function SidePromos() {
           opacity: open ? 1 : 0,
           transition: `transform ${ENTER_MS}ms ease, opacity ${ENTER_MS}ms ease`,
           width: "min(320px, calc(100vw - 20px))",
-          height: 44, // شريط رقيق
+          height: 22, // شريط رقيق
           borderRadius: 999,
           border: "1px solid rgba(255,255,255,0.14)",
           background:
