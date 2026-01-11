@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import AdminSupport from "./pages/AdminSupport";
 
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
@@ -54,6 +55,7 @@ function AnimatedRoutes() {
           <Route path="/top-rated" element={<TopRated />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/reviews" element={<Reviews />} />
+<Route path="/admin/support" element={<AdminSupport />} />
 
           {/* ✅ Blog */}
           <Route path="/blog" element={<Blog />} />
@@ -95,7 +97,7 @@ export default function App() {
 
       <AnimatedRoutes />
       <Footer />
-      <SupportChat />
+{import.meta.env.PROD && <SupportChat />}
     </Router>
   );
 }
