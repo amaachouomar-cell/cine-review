@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const LS_KEY = "cine_side_promos_closed_v2";
+const LS_KEY = "cine_side_cloud_closed_v1";
 
-// توقيت الظهور/الاختفاء
-const SHOW_MS = 6000;   // يظهر 6 ثواني
-const HIDE_MS = 54000;  // يختفي 54 ثانية (المجموع ~ 60s)
+const SHOW_MS = 4500;   // يظهر 4.5 ثواني
+const HIDE_MS = 55500;  // يختفي 55.5 ثانية
 
 export default function SidePromos() {
   const location = useLocation();
@@ -13,159 +12,155 @@ export default function SidePromos() {
   const [closed, setClosed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // للتحكم بالظهور/الإخفاء التلقائي
-  const [visible, setVisible] = useState(true);
+  const [autoVisible, setAutoVisible] = useState(true); // للنبض التلقائي
+  const [open, setOpen] = useState(false);              // popover
 
   useEffect(() => {
     setClosed(localStorage.getItem(LS_KEY) === "1");
     setMounted(true);
   }, []);
 
-  // اختياري: إخفاء في صفحات معينة
+  // (اختياري) اخفاء في صفحات معينة
   const hiddenOn = useMemo(() => {
     const path = location?.pathname || "/";
+    // مثال: اخفاء في صفحات التفاصيل كي لا يزعج
+    // return path.startsWith("/movie/");
     return false;
-    // مثال:
-    // return path.startsWith("/admin");
   }, [location?.pathname]);
 
-  // دورة الظهور/الاختفاء
+  // دورة الظهور/الاختفاء التلقائية (بدون إزعاج)
   useEffect(() => {
     if (!mounted || closed || hiddenOn) return;
 
     let showTimer;
-    let hideTimer;
-    let loopInterval;
+    let loop;
 
     const cycle = () => {
-      setVisible(true);
-      showTimer = setTimeout(() => setVisible(false), SHOW_MS);
+      setAutoVisible(true);
+      showTimer = setTimeout(() => setAutoVisible(false), SHOW_MS);
     };
 
     cycle();
-    loopInterval = setInterval(cycle, SHOW_MS + HIDE_MS);
+    loop = setInterval(cycle, SHOW_MS + HIDE_MS);
 
     return () => {
       clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-      clearInterval(loopInterval);
+      clearInterval(loop);
     };
   }, [mounted, closed, hiddenOn]);
 
+  // اغلاق popover عند تغيير الصفحة
+  useEffect(() => {
+    setOpen(false);
+  }, [location?.pathname]);
+
   if (!mounted || closed || hiddenOn) return null;
 
-  const close = () => {
+  const closeForever = () => {
     localStorage.setItem(LS_KEY, "1");
     setClosed(true);
   };
 
+  // عندما تكون اللوحة مفتوحة: نظهر السحابة دائمًا (بدون اختفاء)
+  const shouldShow = open ? true : autoVisible;
+
   return (
     <div className="fixed left-3 bottom-20 z-[9999]">
-      {/* Mini FAB (دائمًا موجود) */}
+      {/* Bubble Cloud */}
       <button
-        onClick={() => setVisible((v) => !v)}
-        className="
-          group
-          w-10 h-10 rounded-full
-          bg-white/5 hover:bg-white/10
-          border border-white/10
-          backdrop-blur-xl
-          shadow-[0_10px_30px_rgba(0,0,0,.45)]
-          grid place-items-center
-          text-white/90
-          transition
-        "
-        aria-label="إظهار/إخفاء الإشهار"
-        title="اكتشف"
+        onClick={() => setOpen((v) => !v)}
+        className={[
+          "relative",
+          "w-11 h-11 rounded-full",
+          "backdrop-blur-2xl",
+          "border border-white/10",
+          "bg-white/5 hover:bg-white/10",
+          "shadow-[0_14px_40px_rgba(0,0,0,.45)]",
+          "transition-all duration-300",
+          "grid place-items-center",
+          shouldShow ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 pointer-events-none",
+        ].join(" ")}
+        aria-label="Open quick links"
+        title="Quick"
       >
-        <span className="text-[16px]">✨</span>
+        {/* تأثير سحابة/ماء */}
+        <span className="absolute inset-0 rounded-full overflow-hidden">
+          <span className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-white/10 blur-2xl" />
+          <span className="absolute -bottom-6 -right-6 w-16 h-16 rounded-full bg-white/10 blur-2xl" />
+          <span className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" />
+        </span>
+
+        {/* أيقونة */}
+        <span className="relative text-white/85 text-[16px]">
+          🫧
+        </span>
+
+        {/* نقطة إشعار خفيفة */}
+        <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500/80 shadow-[0_0_0_3px_rgba(0,0,0,.35)] animate-pulse" />
       </button>
 
-      {/* Panel */}
+      {/* Popover صغير جدا */}
       <div
         className={[
           "mt-2",
-          "pointer-events-auto",
+          "w-[170px] max-w-[55vw]",
           "rounded-2xl border border-white/10",
-          "bg-gradient-to-b from-black/65 to-black/45",
-          "backdrop-blur-xl",
-          "shadow-[0_14px_50px_rgba(0,0,0,.55)]",
+          "bg-black/35 backdrop-blur-2xl",
+          "shadow-[0_18px_55px_rgba(0,0,0,.6)]",
           "overflow-hidden",
-          "w-[160px] max-w-[46vw]",
-          "transition-all duration-300",
-          visible ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-2 scale-95 pointer-events-none",
+          "transition-all duration-200",
+          open ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-1 scale-95 pointer-events-none",
         ].join(" ")}
       >
-        {/* top bar */}
-        <div className="flex items-center justify-between px-2 py-2 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-white/70 animate-pulse" />
-            <span className="text-[11px] text-white/80 font-semibold tracking-wide">
-              جديد بالموقع
-            </span>
-          </div>
-
+        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+          <span className="text-[11px] font-semibold text-white/80">
+            اكتشف المزيد
+          </span>
           <button
-            onClick={close}
-            className="
-              w-7 h-7 grid place-items-center
-              rounded-xl bg-white/5 hover:bg-white/10
-              border border-white/10
-              text-white/80 hover:text-white
-              transition
-            "
-            aria-label="إغلاق نهائي"
-            title="إغلاق نهائي"
+            onClick={closeForever}
+            className="text-[12px] px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition"
+            title="إخفاء نهائي"
           >
             ✕
           </button>
         </div>
 
-        {/* content */}
         <div className="p-2 flex flex-col gap-2">
-          <Link
-            to="/blog"
-            className="
-              group flex items-center justify-between
-              rounded-xl border border-white/10
-              bg-white/5 hover:bg-white/10
-              px-3 py-2 transition
-            "
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[15px]">📰</span>
-              <div className="leading-tight">
-                <div className="text-[12px] font-semibold text-white">المدونة</div>
-                <div className="text-[10px] text-white/65">مقالات وتوصيات</div>
-              </div>
-            </div>
-            <span className="text-white/60 group-hover:text-white transition text-[14px]">›</span>
-          </Link>
+          <CloudLink to="/blog" icon="📰" title="Blog" subtitle="مقالات مختارة" />
+          <CloudLink to="/games" icon="🎮" title="Games" subtitle="ألعاب خفيفة" />
+        </div>
 
-          <Link
-            to="/games"
-            className="
-              group flex items-center justify-between
-              rounded-xl border border-white/10
-              bg-white/5 hover:bg-white/10
-              px-3 py-2 transition
-            "
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[15px]">🎮</span>
-              <div className="leading-tight">
-                <div className="text-[12px] font-semibold text-white">الألعاب</div>
-                <div className="text-[10px] text-white/65">خفيفة وممتعة</div>
-              </div>
-            </div>
-            <span className="text-white/60 group-hover:text-white transition text-[14px]">›</span>
-          </Link>
-
-          <div className="text-[10px] text-white/50 px-1 pt-1">
-            تظهر لثواني فقط بدون إزعاج.
-          </div>
+        <div className="px-3 pb-3 text-[10px] text-white/45">
+          تظهر أحيانًا فقط — بدون إزعاج.
         </div>
       </div>
     </div>
+  );
+}
+
+function CloudLink({ to, icon, title, subtitle }) {
+  return (
+    <Link
+      to={to}
+      className="
+        group flex items-center gap-2
+        rounded-xl border border-white/10
+        bg-white/5 hover:bg-white/10
+        px-3 py-2 transition
+      "
+    >
+      <span className="text-[15px]">{icon}</span>
+      <span className="leading-tight">
+        <span className="block text-[12px] font-semibold text-white">
+          {title}
+        </span>
+        <span className="block text-[10px] text-white/60">
+          {subtitle}
+        </span>
+      </span>
+      <span className="ml-auto text-white/55 group-hover:text-white transition text-[14px]">
+        ›
+      </span>
+    </Link>
   );
 }
