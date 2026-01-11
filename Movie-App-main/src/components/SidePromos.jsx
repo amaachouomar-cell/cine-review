@@ -65,7 +65,7 @@ export default function SidePromos() {
   const shouldShow = open ? true : autoVisible;
 
   return (
-    <div className="fixed left-3 bottom-20 z-[9999]">
+    <div className="fixed left-1 bottom-20 z-[9999]">
       {/* Bubble Cloud */}
       <button
         onClick={() => setOpen((v) => !v)}
@@ -91,7 +91,7 @@ export default function SidePromos() {
         </span>
 
         {/* أيقونة */}
-        <span className="relative text-white/85 text-[16px]">
+        <span className="relative text-white/85 text-[10px]">
           🫧
         </span>
 
