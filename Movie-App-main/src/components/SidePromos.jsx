@@ -78,7 +78,7 @@ export default function SidePromos() {
         aria-label="إظهار/إخفاء الإشهار"
         title="اكتشف"
       >
-        <span className="text-[16px]">✨</span>
+        <span className="text-[16px]"></span>
       </button>
 
       {/* Panel */}
