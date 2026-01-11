@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Reviews from "../components/Reviews";
 
 // عدّل المسار إذا ملف tmdb.js عندك بمكان مختلف
 import {
