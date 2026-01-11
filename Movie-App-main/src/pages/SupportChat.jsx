@@ -182,7 +182,7 @@ export default function SupportChat() {
           bottom: pos.y,
           zIndex: 9999,
         }}
-        className="group relative h-[54px] w-[54px] rounded-full border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.55)]"
+        className="group relative h-[60px] w-[60px] rounded-full border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.55)]"
       >
         {/* هالة فخمة */}
         <span className="pointer-events-none absolute -inset-2 rounded-full bg-gradient-to-tr from-red-500/0 via-white/5 to-red-500/0 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
