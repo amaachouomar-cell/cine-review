@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
+import SidePromos from "./components/SidePromos";
 
 import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
@@ -89,6 +90,8 @@ export default function App() {
   return (
     <Router>
       <Navbar />
+      <SidePromos />
+
       <AnimatedRoutes />
       <Footer />
     </Router>
