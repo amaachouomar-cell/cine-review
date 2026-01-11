@@ -97,7 +97,7 @@ export default function App() {
 
       <AnimatedRoutes />
       <Footer />
-{import.meta.env.PROD && <SupportChat />}
+  <SupportChat />
     </Router>
   );
 }
