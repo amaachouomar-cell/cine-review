@@ -175,7 +175,13 @@ export default function Home() {
 
         {/* ✅ HERO SLIDER */}
         <HeroSlider />
-
+<!-- اعلان افقي -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-8240560916475592"
+     data-ad-slot="2698499570"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
         {/* ✅ GENRES */}
         <div className="flex flex-wrap justify-center gap-2 mt-10">
           <button
