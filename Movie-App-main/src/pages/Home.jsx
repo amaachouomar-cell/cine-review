@@ -28,6 +28,15 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const { t } = useLang();
 
+  // ✅ تشغيل اعلان ادسنس بعد ما الصفحة تترندر
+  useEffect(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -60,20 +69,19 @@ export default function Home() {
   }, [query]);
 
   // ✅ Fetch genres once
- useEffect(() => {
-  const fetchGenres = async () => {
-    try {
-      const data = await getGenres();
-      setGenres(data?.genres || []);
-    } catch (error) {
-      console.error("Error fetching genres:", error);
-      setGenres([]); // ✅ يمنع crash
-    }
-  };
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const data = await getGenres();
+        setGenres(data?.genres || []);
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+        setGenres([]);
+      }
+    };
 
-  fetchGenres();
-}, []);
-
+    fetchGenres();
+  }, []);
 
   // ✅ Fetch movies
   useEffect(() => {
@@ -175,13 +183,19 @@ export default function Home() {
 
         {/* ✅ HERO SLIDER */}
         <HeroSlider />
-<!-- اعلان افقي -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-8240560916475592"
-     data-ad-slot="2698499570"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
+
+        {/* ✅ اعلان افقي (AdSense) */}
+        <div className="my-8 text-center">
+          <ins
+            className="adsbygoogle"
+            style={{ display: "block" }}
+            data-ad-client="ca-pub-8240560916475592"
+            data-ad-slot="2698499570"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
+        </div>
+
         {/* ✅ GENRES */}
         <div className="flex flex-wrap justify-center gap-2 mt-10">
           <button
@@ -272,31 +286,30 @@ export default function Home() {
           </button>
         </div>
       </div>
+
       <div className="max-w-5xl mx-auto px-4 mt-16">
-  <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
-    <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-4">
-      What is <span className="text-red-500">CineReview</span>?
-    </h2>
+        <div className="bg-zinc-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-4">
+            What is <span className="text-red-500">CineReview</span>?
+          </h2>
 
-    <p className="text-gray-300 leading-relaxed text-sm md:text-base">
-      CineReview is a modern platform where movie lovers can discover trending films,
-      explore top-rated titles, and read real reviews written by users. We focus on a smooth,
-      fast and premium experience while helping people choose what to watch next.
-    </p>
+          <p className="text-gray-300 leading-relaxed text-sm md:text-base">
+            CineReview is a modern platform where movie lovers can discover trending films,
+            explore top-rated titles, and read real reviews written by users. We focus on a smooth,
+            fast and premium experience while helping people choose what to watch next.
+          </p>
 
-    <div className="mt-6 space-y-2 text-gray-300 text-sm">
-      <p>✅ Browse trending movies updated weekly</p>
-      <p>✅ Save your favorites and track what you love</p>
-      <p>✅ Write reviews to help others and build community trust</p>
-    </div>
+          <div className="mt-6 space-y-2 text-gray-300 text-sm">
+            <p>✅ Browse trending movies updated weekly</p>
+            <p>✅ Save your favorites and track what you love</p>
+            <p>✅ Write reviews to help others and build community trust</p>
+          </div>
 
-    <p className="text-gray-400 text-xs mt-6">
-      This website uses the TMDB API but is not endorsed or certified by TMDB.
-    </p>
-  </div>
-</div>
-
+          <p className="text-gray-400 text-xs mt-6">
+            This website uses the TMDB API but is not endorsed or certified by TMDB.
+          </p>
+        </div>
+      </div>
     </motion.div>
-    
   );
 }
